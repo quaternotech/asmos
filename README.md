@@ -4,23 +4,16 @@
 
 <div align="center">
     <img src="https://img.shields.io/badge/QEMU-%232196F3?style=for-the-badge&logo=qemu&logoColor=white&labelColor=063760">
-    &nbsp
     <img src="https://img.shields.io/badge/Assembly-%23FFC107?style=for-the-badge&logo=academia&logoColor=white&labelColor=664d00">
-    &nbsp
     <img src="https://img.shields.io/badge/Rust-%23903C50?style=for-the-badge&logo=rust&logoColor=white&labelColor=481e28">
 </div>
 
 <br>
 
 <div align="center">
-    <a href="https://github.com/mansoormemon/asmos/actions/workflows/rust.yml">
-        <img src="https://github.com/mansoormemon/asmos/actions/workflows/rust.yml/badge.svg" alt="Rust">
+    <a href="https://github.com/sprucenest/asmos/actions/workflows/rust.yml">
+        <img src="https://github.com/sprucenest/asmos/actions/workflows/rust.yml/badge.svg" alt="Rust">
     </a>
-    &nbsp
-    <a href="https://github.com/mansoormemon/asmos/actions/workflows/mdbook.yml">
-        <img src="https://github.com/mansoormemon/asmos/actions/workflows/mdbook.yml/badge.svg" alt="MDBook">
-    </a>
-    &nbsp
     <a href="LICENSE.md">
         <img src="https://img.shields.io/badge/License-MIT-%23007396?labelColor=2b3137">
     </a>
@@ -80,8 +73,7 @@ Mansoor Ahmed Memon
 
 ## Links
 
-- [Repository](https://github.com/mansoormemon/asmos)
-- [Documentation](https://mansoormemon.github.io/asmos)
+- [Repository](https://github.com/sprucenest/asmos)
 
 ## License
 
