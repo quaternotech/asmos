@@ -1,62 +1,43 @@
 OUTPUT_FORMAT("elf64-x86-64")
-ENTRY(_start)
+ENTRY(start)
 
-_KERNEL_OFFSET = 0xFFFFFFFF80000000;
+KERNEL_OFFSET = 0xFFFFFFFF80000000;
 
 SECTIONS {
-    _RESERVED_REGION_BEGIN = .;
-
     . = 1M;
 
-    _PRELUDE_REGION_BEGIN = .;
-
-    .init : {
-		KEEP(*(.mbt2hdr*))
-		KEEP(*(.init*))
-	    . = ALIGN(4K);
+    .prelude ALIGN(4K) : {
+		KEEP(*(.prelude.multiboot))
+		KEEP(*(.prelude .prelude.*))
     }
 
-    _PRELUDE_REGION_END = .;
+    . += KERNEL_OFFSET;
 
-    . += _KERNEL_OFFSET;
-
-	_KERNEL_REGION_BEGIN = .;
-
-	.text : AT(ADDR(.text) - _KERNEL_OFFSET) {
-		*(.text*)
-	    . = ALIGN(4K);
+	.text ALIGN(4K) : AT(ADDR(.text) - KERNEL_OFFSET) {
+		*(.text .text.*)
 	}
 
-	.rodata : AT(ADDR(.rodata) - _KERNEL_OFFSET) {
-        *(.rodata*)
-	    . = ALIGN(4K);
+	.rodata ALIGN(4K) : AT(ADDR(.rodata) - KERNEL_OFFSET) {
+        *(.rodata .rodata.*)
     }
 
-	.data : AT(ADDR(.data) - _KERNEL_OFFSET) {
-        *(.data*)
-	    . = ALIGN(4K);
+	.data ALIGN(4K) : AT(ADDR(.data) - KERNEL_OFFSET) {
+        *(.data .data.*)
     }
 
-    .bss : AT(ADDR(.bss) - _KERNEL_OFFSET) {
-        *(.bss*)
-	    . = ALIGN(4K);
+    .bss ALIGN(4K) : AT(ADDR(.bss) - KERNEL_OFFSET) {
+        *(.bss .bss.*)
     }
 
-    .got : AT(ADDR(.got) - _KERNEL_OFFSET) {
-        *(.got*)
-	    . = ALIGN(4K);
+    .got ALIGN(4K) : AT(ADDR(.got) - KERNEL_OFFSET) {
+        *(.got .got.*)
     }
-
-	_KERNEL_REGION_END = .;
-
-    . = ALIGN(2M);
-	_RESERVED_REGION_END = . - _KERNEL_OFFSET;
 
 	/DISCARD/ : {
-		*(.comment*)
-        *(.eh_frame*)
-        *(.gcc_except_table*)
-        *(.note*)
-        *(.rel.eh_frame*)
+		*(.comment .comment.*)
+        *(.eh_frame .eh_frame.*)
+        *(.gcc_except_table .gcc_except_table.*)
+        *(.note .note.*)
+        *(.rel.eh_frame .rel.eh_frame.*)
 	}
 }

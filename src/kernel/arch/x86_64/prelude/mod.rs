@@ -20,30 +20,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use std::env;
-use std::error::Error;
+use core::arch::global_asm;
 
-#[cfg(target_arch = "x86_64")]
-fn bake_configurations() -> Result<(), Box<dyn Error>> {
-    let arch = env::var("TARGET").unwrap();
-    let profile = env::var("PROFILE").unwrap();
-    let flavor = "vanilla";
+mod configurations;
+mod multiboot;
+mod paging;
+mod stack;
 
-    let work_dir = format!("cfg/konfigurator/{}/{}/{}", arch, flavor, profile);
-    let out_dir = env::var("OUT_DIR").unwrap();
+global_asm!(include_str!("raw.s"));
 
-    konfigurator::bake(work_dir, out_dir.clone(), true)?;
-
-    Ok(())
-}
-
-
-fn main() -> Result<(), Box<dyn Error>> {
-    println!("cargo:rustc-env=TARGET={}", env::var("TARGET").unwrap());
-
-    println!("cargo:rerun-if-changed=cfg");
-
-    bake_configurations()?;
-
-    Ok(())
+#[no_mangle]
+unsafe extern "C" fn start_higher_half_kernel(boot_info_addr: usize) -> ! {
+    crate::hlt_loop();
 }

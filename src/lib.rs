@@ -22,6 +22,7 @@
 
 #![no_std]
 #![feature(abi_x86_interrupt)]
+#![feature(naked_functions)]
 
 mod aux;
 pub mod kernel;

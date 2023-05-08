@@ -20,30 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use std::env;
-use std::error::Error;
-
-#[cfg(target_arch = "x86_64")]
-fn bake_configurations() -> Result<(), Box<dyn Error>> {
-    let arch = env::var("TARGET").unwrap();
-    let profile = env::var("PROFILE").unwrap();
-    let flavor = "vanilla";
-
-    let work_dir = format!("cfg/konfigurator/{}/{}/{}", arch, flavor, profile);
-    let out_dir = env::var("OUT_DIR").unwrap();
-
-    konfigurator::bake(work_dir, out_dir.clone(), true)?;
-
-    Ok(())
+macro_rules! konfigurator_file {
+    () => { concat!(env!("OUT_DIR"), "/Konfigurator.rs") };
 }
 
-
-fn main() -> Result<(), Box<dyn Error>> {
-    println!("cargo:rustc-env=TARGET={}", env::var("TARGET").unwrap());
-
-    println!("cargo:rerun-if-changed=cfg");
-
-    bake_configurations()?;
-
-    Ok(())
-}
+include!(konfigurator_file!());

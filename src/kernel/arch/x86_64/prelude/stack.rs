@@ -20,30 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use std::env;
-use std::error::Error;
+use super::configurations::CONFIG_CORE_MEMORY_STACK_SIZE;
 
-#[cfg(target_arch = "x86_64")]
-fn bake_configurations() -> Result<(), Box<dyn Error>> {
-    let arch = env::var("TARGET").unwrap();
-    let profile = env::var("PROFILE").unwrap();
-    let flavor = "vanilla";
-
-    let work_dir = format!("cfg/konfigurator/{}/{}/{}", arch, flavor, profile);
-    let out_dir = env::var("OUT_DIR").unwrap();
-
-    konfigurator::bake(work_dir, out_dir.clone(), true)?;
-
-    Ok(())
+macro_rules! stack_default {
+    () => { Stack([0; CONFIG_CORE_MEMORY_STACK_SIZE]) };
 }
 
+#[no_mangle]
+static KERNEL_STACK_SIZE: usize = CONFIG_CORE_MEMORY_STACK_SIZE;
 
-fn main() -> Result<(), Box<dyn Error>> {
-    println!("cargo:rustc-env=TARGET={}", env::var("TARGET").unwrap());
+#[repr(C, align(4096))]
+struct Stack<const SIZE: usize>([u8; SIZE]);
 
-    println!("cargo:rerun-if-changed=cfg");
-
-    bake_configurations()?;
-
-    Ok(())
-}
+#[no_mangle]
+static mut KERNEL_STACK: Stack<{ CONFIG_CORE_MEMORY_STACK_SIZE }> = stack_default!();

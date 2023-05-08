@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<Konfigurator>
+    <Section name="Core">
+        <Section name="Memory">
+            <Config key="STACK_SIZE">
+                <Enum default="0" value="1">
+                    <Member>16384</Member>
+                    <Member>32768</Member>
+                    <Member>65536</Member>
+                </Enum>
+            </Config>
+            <Config key="INITIAL_MAPPING_SIZE">
+                <Enum default="0" value="4">
+                    <Member>2097152</Member>
+                    <Member>4194304</Member>
+                    <Member>8388608</Member>
+                    <Member>16777216</Member>
+                    <Member>33554432</Member>
+                    <Member>67108864</Member>
+                    <Member>134217728</Member>
+                    <Member>268435456</Member>
+                    <Member>536870912</Member>
+                </Enum>
+            </Config>            
+        </Section>
+    </Section>
+</Konfigurator>

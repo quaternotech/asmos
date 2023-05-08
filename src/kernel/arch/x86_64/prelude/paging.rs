@@ -20,30 +20,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use std::env;
-use std::error::Error;
+use super::configurations::CONFIG_CORE_MEMORY_INITIAL_MAPPING_SIZE;
 
-#[cfg(target_arch = "x86_64")]
-fn bake_configurations() -> Result<(), Box<dyn Error>> {
-    let arch = env::var("TARGET").unwrap();
-    let profile = env::var("PROFILE").unwrap();
-    let flavor = "vanilla";
+macro_rules! table_size { () => { 4096 } }
 
-    let work_dir = format!("cfg/konfigurator/{}/{}/{}", arch, flavor, profile);
-    let out_dir = env::var("OUT_DIR").unwrap();
-
-    konfigurator::bake(work_dir, out_dir.clone(), true)?;
-
-    Ok(())
+macro_rules! table_default {
+    () => { PageTable([0; table_size!()]) }
 }
 
+#[no_mangle]
+static INITIAL_MAPPING_SIZE: usize = CONFIG_CORE_MEMORY_INITIAL_MAPPING_SIZE;
 
-fn main() -> Result<(), Box<dyn Error>> {
-    println!("cargo:rustc-env=TARGET={}", env::var("TARGET").unwrap());
+#[repr(C, align(4096))]
+struct PageTable([u8; table_size!()]);
 
-    println!("cargo:rerun-if-changed=cfg");
-
-    bake_configurations()?;
-
-    Ok(())
-}
+#[no_mangle]
+static mut PT4: PageTable = table_default!();
+#[no_mangle]
+static mut PT3: PageTable = table_default!();
+#[no_mangle]
+static mut PT2: PageTable = table_default!();
