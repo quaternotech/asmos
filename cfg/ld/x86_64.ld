@@ -7,8 +7,8 @@ SECTIONS {
     . = 1M;
 
     .prelude ALIGN(4K) : {
-		KEEP(*(.prelude.multiboot))
-		KEEP(*(.prelude .prelude.*))
+		KEEP(*(.preliminary.multiboot))
+		KEEP(*(.preliminary .preliminary.*))
     }
 
     . += KERNEL_OFFSET;

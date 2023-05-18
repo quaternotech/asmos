@@ -20,23 +20,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use super::configurations::CONFIG_CORE_MEMORY_INITIAL_MAPPING_SIZE;
+use super::configurations::CONFIG_CORE_MEMORY_STACK_SIZE;
 
-macro_rules! table_size { () => { 4096 } }
-
-macro_rules! table_default {
-    () => { PageTable([0; table_size!()]) }
+// The `stack_default` macro generates a default stack with a specific size.
+// It creates a `Stack` struct with an underlying array of zeros. The size of
+// the array is determined by the `CONFIG_CORE_MEMORY_STACK_SIZE` constant.
+macro_rules! stack_default {
+    () => {
+        Stack([0; CONFIG_CORE_MEMORY_STACK_SIZE])
+    };
 }
 
 #[no_mangle]
-static INITIAL_MAPPING_SIZE: usize = CONFIG_CORE_MEMORY_INITIAL_MAPPING_SIZE;
+static KERNEL_STACK_SIZE: usize = CONFIG_CORE_MEMORY_STACK_SIZE;
 
 #[repr(C, align(4096))]
-struct PageTable([u8; table_size!()]);
+struct Stack<const SIZE: usize>([u8; SIZE]);
 
 #[no_mangle]
-static mut PT4: PageTable = table_default!();
-#[no_mangle]
-static mut PT3: PageTable = table_default!();
-#[no_mangle]
-static mut PT2: PageTable = table_default!();
+static mut KERNEL_STACK: Stack<{ CONFIG_CORE_MEMORY_STACK_SIZE }> = stack_default!();

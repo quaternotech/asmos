@@ -43,7 +43,10 @@ lazy_static! {
 
 #[doc(hidden)]
 pub fn _print(args: Arguments) {
-    instructions::interrupts::without_interrupts(
-        || { UART_3F8.lock().write_fmt(args).expect("failed to print to serial output"); }
-    );
+    instructions::interrupts::without_interrupts(|| {
+        UART_3F8
+            .lock()
+            .write_fmt(args)
+            .expect("failed to print to serial output");
+    });
 }

@@ -20,17 +20,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use super::configurations::CONFIG_CORE_MEMORY_STACK_SIZE;
+use super::configurations::CONFIG_CORE_MEMORY_INITIAL_MAPPING_SIZE;
 
-macro_rules! stack_default {
-    () => { Stack([0; CONFIG_CORE_MEMORY_STACK_SIZE]) };
+// The page table consists of 512 entries, with each entry having a size of 8 bytes.
+// Therefore, the total size of the page table is calculated as 512 * 8 = 4096 bytes.
+macro_rules! table_size {
+    () => {
+        4096
+    };
 }
 
+// The `table_default` macro generates a default page table with a specific size.
+// It creates a `PageTable` struct with an underlying array of zeros. The size of
+// the array is determined by the `table_size!()` macro.
+macro_rules! table_default {
+    () => {
+        PageTable([0; table_size!()])
+    };
+}
+
+// The initial mapping size used for the core memory. This value is retrieved
+// from the CONFIG_CORE_MEMORY_INITIAL_MAPPING_SIZE configuration option
 #[no_mangle]
-static KERNEL_STACK_SIZE: usize = CONFIG_CORE_MEMORY_STACK_SIZE;
+static INITIAL_MAPPING_SIZE: usize = CONFIG_CORE_MEMORY_INITIAL_MAPPING_SIZE;
 
 #[repr(C, align(4096))]
-struct Stack<const SIZE: usize>([u8; SIZE]);
+struct PageTable([u8; table_size!()]);
 
 #[no_mangle]
-static mut KERNEL_STACK: Stack<{ CONFIG_CORE_MEMORY_STACK_SIZE }> = stack_default!();
+static mut PT4: PageTable = table_default!();
+#[no_mangle]
+static mut PT3: PageTable = table_default!();
+#[no_mangle]
+static mut PT2: PageTable = table_default!();

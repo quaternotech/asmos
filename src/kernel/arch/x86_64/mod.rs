@@ -26,7 +26,7 @@ mod elf;
 mod exceptions;
 mod gdt;
 mod idt;
-mod prelude;
+mod preliminary;
 
 pub mod serial;
 

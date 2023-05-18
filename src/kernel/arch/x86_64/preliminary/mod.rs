@@ -20,8 +20,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-macro_rules! konfigurator_file {
-    () => { concat!(env!("OUT_DIR"), "/Konfigurator.rs") };
-}
+use core::arch::global_asm;
 
-include!(konfigurator_file!());
+mod configurations;
+mod multiboot;
+mod paging;
+mod stack;
+
+// This assembly file contains essential instructions for configuring fundamental system
+// settings and transitioning into the long mode of the processor. By incorporating this
+// file, low-level operations and directives are directly integrated into the Rust code,
+// allowing precise control over system initialization and utilization of advanced
+// hardware features.
+global_asm!(include_str!("trampoline.s"));
+
+#[no_mangle]
+unsafe extern "C" fn start_higher_half_kernel(_boot_info_addr: usize) -> ! {
+    crate::hlt_loop();
+}

@@ -25,17 +25,17 @@
 .section .rodata
 
 .align 16
-GDT:
+TGDT:
     .quad 0
-    GDT_CODE_SEGMENT = . - GDT
+    TGDT_CODE_SEGMENT = . - TGDT
     .quad 0x00AF9A000000FFFF
-    GDT_DATA_SEGMENT = . - GDT
+    TGDT_DATA_SEGMENT = . - TGDT
     .quad 0x00CF92000000FFFF
-GDT_END:
+TGDT_END:
 
-GDT_POINTER:
-    .word GDT_END - GDT - 1
-    .quad GDT - KERNEL_OFFSET
+TGDT_POINTER:
+    .word TGDT_END - TGDT - 1
+    .quad TGDT - KERNEL_OFFSET
 
 .set KERNEL_OFFSET, 0xFFFFFFFF80000000
 .set KERNEL_STACK_PA, KERNEL_STACK - KERNEL_OFFSET
@@ -47,11 +47,11 @@ GDT_POINTER:
 
 .set INITIAL_MAPPING_SIZE_PA, INITIAL_MAPPING_SIZE - KERNEL_OFFSET
 
-.set GDT_POINTER_PA, GDT_POINTER - KERNEL_OFFSET
+.set TGDT_POINTER_PA, TGDT_POINTER - KERNEL_OFFSET
 
 .set START_HIGHER_HALF_KERNEL_PA, start_higher_half_kernel - KERNEL_OFFSET
 
-.section .prelude.text, "ax", @progbits
+.section .preliminary.text, "ax", @progbits
 .code32
 
 start:
@@ -71,9 +71,9 @@ start:
     call set_up_page_tables
     call enable_paging
 
-    lgdt [GDT_POINTER_PA]
+    lgdt [TGDT_POINTER_PA]
 
-    lea eax, [GDT_DATA_SEGMENT]
+    lea eax, [TGDT_DATA_SEGMENT]
     mov ds, eax
     mov es, eax
     mov fs, eax
@@ -180,15 +180,15 @@ enable_paging:
     // Set the long mode bit in the Extended Feature Enable Register (EFER).
     mov ecx, 0xC0000080
     // Enable flags in EFER MSR:
-    //  1. Long Mode Enable (LME)           [8]
-    //  2. No-Execute Enable (NXE)          [11]
+    //  1. Long Mode Enable (LME)                           [8]
+    //  2. No-Execute Enable (NXE)                          [11]
     rdmsr
     or eax, (1 << 11) | (1 << 8)
     wrmsr
 
     // Enable flags in CR0 register:
-    //  1. Write Protect (WP)               [16]
-    //  2. Paging (PG)                      [31]
+    //  1. Write Protect (WP)                               [16]
+    //  2. Paging (PG)                                      [31]
     mov eax, cr0
     or eax, (1 << 31) | (1 << 16)
     mov cr0, eax

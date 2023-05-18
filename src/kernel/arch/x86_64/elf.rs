@@ -23,7 +23,9 @@
 use multiboot2::BootInformation;
 
 macro_rules! foreign_symbol {
-    ($symbol:ident) => (unsafe { &$symbol as *const u8 as usize });
+    ($symbol:ident) => {
+        unsafe { &$symbol as *const u8 as usize }
+    };
 }
 
 extern "C" {
@@ -40,10 +42,12 @@ pub fn init(boot_info_addr: usize) -> Result<(), ()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 pub fn multiboot_info() -> &'static BootInformation {
     unsafe { MULTIBOOT_INFO.as_ref().unwrap() }
 }
 
+#[allow(dead_code)]
 pub fn kernel_offset() -> usize {
     foreign_symbol!(KERNEL_OFFSET)
 }

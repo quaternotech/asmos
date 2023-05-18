@@ -37,7 +37,12 @@ impl BreakpointException {
     pub const MNEMONIC: &'static str = "#BP";
 
     pub extern "x86-interrupt" fn handler(stack_frame: InterruptStackFrame) {
-        serial_println!("({}, {:#04X}) @ {:#?}", Self::MNEMONIC, Self::CODE, stack_frame);
+        serial_println!(
+            "({}, {:#04X}) @ {:#?}",
+            Self::MNEMONIC,
+            Self::CODE,
+            stack_frame
+        );
     }
 }
 
@@ -55,6 +60,12 @@ impl DoubleFaultException {
     pub const MNEMONIC: &'static str = "#DF";
 
     pub extern "x86-interrupt" fn handler(stack_frame: InterruptStackFrame, err_code: u64) -> ! {
-        panic!("({}, {:#04X}) @ {:#?}, E={}", Self::MNEMONIC, Self::CODE, stack_frame, err_code);
+        panic!(
+            "({}, {:#04X}) @ {:#?}, E={}",
+            Self::MNEMONIC,
+            Self::CODE,
+            stack_frame,
+            err_code
+        );
     }
 }
