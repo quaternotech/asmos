@@ -22,16 +22,16 @@
 
 use x86_64::instructions;
 
-mod elf;
 mod exceptions;
 mod gdt;
 mod idt;
+mod meta;
 mod preliminary;
 
 pub mod serial;
 
 pub fn init(boot_info_addr: usize) {
-    elf::init(boot_info_addr).expect("kernel failed to retrieve metadata");
+    meta::init(boot_info_addr).expect("kernel failed to retrieve metadata");
 
     gdt::init().expect("kernel failed to initialize GDT");
     idt::init().expect("kernel failed to initialize IDT");
