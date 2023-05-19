@@ -33,8 +33,3 @@ mod stack;
 // allowing precise control over system initialization and utilization of advanced
 // hardware features.
 global_asm!(include_str!("trampoline.s"));
-
-#[no_mangle]
-unsafe extern "C" fn start_higher_half_kernel(_boot_info_addr: usize) -> ! {
-    crate::hlt_loop();
-}

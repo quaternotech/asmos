@@ -24,6 +24,11 @@
 
 .section .rodata
 
+// Temporary GDT
+//
+// This is a temporary GDT that is used to facilitate the jump from the lower half to the higher half. Once a
+// fully configured GDT is in place, it will replace this temporary GDT, ensuring accurate memory segmentation
+// and reliable system operation.
 .align 16
 TGDT:
     .quad 0
@@ -33,9 +38,13 @@ TGDT:
     .quad 0x00CF92000000FFFF
 TGDT_END:
 
-TGDT_POINTER:
+TGDT_POINTER_LOWER:
     .word TGDT_END - TGDT - 1
     .quad TGDT - KERNEL_OFFSET
+
+TGDT_POINTER_HIGHER:
+    .word TGDT_END - TGDT - 1
+    .quad TGDT
 
 .set KERNEL_OFFSET, 0xFFFFFFFF80000000
 .set KERNEL_STACK_PA, KERNEL_STACK - KERNEL_OFFSET
@@ -47,9 +56,9 @@ TGDT_POINTER:
 
 .set INITIAL_MAPPING_SIZE_PA, INITIAL_MAPPING_SIZE - KERNEL_OFFSET
 
-.set TGDT_POINTER_PA, TGDT_POINTER - KERNEL_OFFSET
+.set TGDT_POINTER_LOWER_PA, TGDT_POINTER_LOWER - KERNEL_OFFSET
 
-.set START_HIGHER_HALF_KERNEL_PA, start_higher_half_kernel - KERNEL_OFFSET
+.set START_LONG_MODE_PA, start_long_mode - KERNEL_OFFSET
 
 .section .preliminary.text, "ax", @progbits
 .code32
@@ -57,10 +66,12 @@ TGDT_POINTER:
 start:
     cli
 
+    // Arguments for `k_main` function.
     mov esi, eax
     mov edi, ebx
 
-    mov eax, offset KERNEL_STACK_PA
+    // Set the stack pointer to point to the top of stack.
+    lea eax, [KERNEL_STACK_PA]
     add eax, KERNEL_STACK_SIZE_PA
     mov esp, eax
 
@@ -71,7 +82,7 @@ start:
     call set_up_page_tables
     call enable_paging
 
-    lgdt [TGDT_POINTER_PA]
+    lgdt [TGDT_POINTER_LOWER_PA]
 
     lea eax, [TGDT_DATA_SEGMENT]
     mov ds, eax
@@ -80,7 +91,8 @@ start:
     mov gs, eax
     mov ss, eax
 
-    ljmp 0x8, offset START_HIGHER_HALF_KERNEL_PA
+    // Perform a long jump from 32-bit to the new 64-bit code segment.
+    ljmp 0x8, offset START_LONG_MODE_PA
 
     hlt
 
@@ -137,16 +149,42 @@ check_long_mode_support:
     hlt
 
 
+// Set up Page Tables
+//
+// This function is responsible for setting up the page tables required for memory mapping. It performs the
+// necessary operations to initialize the page tables with the appropriate entries at each level of the page
+// table hierarchy.
+//
+// This function intends to map two regions of memory. The first is the temporary identity mapping of the
+// lower half of the address space, and the second is the mapping of the kernel in the higher half.
+//
+// Note: In addition to the intended mappings, additional mappings will also be created as a side effect. The
+// reason for this side effect is that the same P3 table is reused for both the identity mapping and the mapping
+// of the higher half kernel region. This approach allows for efficient memory utilization and simplifies the
+// memory mapping process. However, it's important to note that all these temporary mappings, including the identity
+// mapping, will be properly removed at a later stage of the code execution, ensuring the proper configuration
+// and cleanup of the memory mapping setup.
 set_up_page_tables:
-    mov eax, offset PT4_PA
-    mov ebx, offset PT3_PA + 0b11
+    // --- PT4 ---
+    lea eax, [PT4_PA]
+    lea ebx, [PT3_PA + 0b11]
     mov dword ptr [eax], ebx
 
-    mov eax, offset PT3_PA
-    mov ebx, offset PT2_PA + 0b11
+    lea eax, [PT4_PA + (511 * 8)]
+    lea ebx, [PT3_PA + 0b11]
     mov dword ptr [eax], ebx
 
-    mov eax, offset PT2_PA
+    // --- PT3 ---
+    lea ebx, [PT2_PA + 0b11]
+
+    lea eax, [PT3_PA]
+    mov dword ptr [eax], ebx
+
+    lea eax, [PT3_PA + (510 * 8)]
+    mov dword ptr [eax], ebx
+
+    // --- PT2 ---
+    lea eax, [PT2_PA]
     mov ebx, 0b10000011
 
     mov ecx, 0
@@ -192,5 +230,35 @@ enable_paging:
     mov eax, cr0
     or eax, (1 << 31) | (1 << 16)
     mov cr0, eax
+
+    ret
+
+
+.section .text, "ax", @progbits
+.code64
+
+start_long_mode:
+    call unmap_temporary_mappings
+
+    add rsp, KERNEL_OFFSET
+    add rdi, KERNEL_OFFSET
+
+    lgdt [TGDT_POINTER_HIGHER]
+
+    movabs rax, offset k_main
+    jmp rax
+
+halt:
+    cli
+    hlt
+    jmp halt
+
+
+unmap_temporary_mappings:
+    lea rax, [PT3]
+    mov qword ptr [rax], 0
+
+    lea rax, [PT4]
+    mov qword ptr [rax], 0
 
     ret
