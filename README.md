@@ -11,8 +11,8 @@
 <br>
 
 <div align="center">
-    <a href="https://github.com/sprucenest/asmos/actions/workflows/rust.yml">
-        <img src="https://github.com/sprucenest/asmos/actions/workflows/rust.yml/badge.svg" alt="Rust">
+    <a href="https://github.com/quaternotech/asmos/actions/workflows/rust.yml">
+        <img src="https://github.com/quaternotech/asmos/actions/workflows/rust.yml/badge.svg" alt="Rust">
     </a>
     <a href="LICENSE.md">
         <img src="https://img.shields.io/badge/License-MIT-%23007396?labelColor=2b3137">
@@ -73,14 +73,14 @@ Mansoor Ahmed Memon
 
 ## Links
 
-- [Repository](https://github.com/sprucenest/asmos)
+- [Repository](https://github.com/quaternotech/asmos)
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE.md).
+This project is licensed under the [Apache License 2.0](LICENSE.md).
 
 <br>
 
 <p align="center">
-   <sub><sup><small>Copyright 2023 © <b>asmOS</b></small></sup></sub>
+   <sub><sup>Copyright 2023 © Quaterno LLC</sup></sub>
 </p>
