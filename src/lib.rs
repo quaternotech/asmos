@@ -18,12 +18,14 @@
 #![feature(abi_x86_interrupt)]
 #![feature(naked_functions)]
 
+mod arch;
 mod aux;
 pub mod kernel;
 
 pub fn init(boot_info_addr: usize) {
     aux::init();
-    kernel::init(boot_info_addr);
+    arch::init(boot_info_addr);
+    kernel::init();
 }
 
 pub fn hlt_loop() -> ! {

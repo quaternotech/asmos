@@ -14,13 +14,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-mod arch;
+use crate::arch;
 
 pub mod serial;
 
-pub fn init(boot_info_addr: usize) {
-    arch::init(boot_info_addr);
-}
+pub fn init() {}
 
 pub fn hlt_loop() -> ! {
     arch::hlt_loop();

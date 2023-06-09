@@ -16,7 +16,7 @@
 
 use core::fmt::Arguments;
 
-use super::arch;
+use crate::arch;
 
 #[doc(hidden)]
 pub fn _print(args: Arguments) {
