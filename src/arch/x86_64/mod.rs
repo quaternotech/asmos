@@ -19,6 +19,7 @@ use x86_64::instructions;
 mod exceptions;
 mod gdt;
 mod idt;
+mod memory;
 mod meta;
 mod preliminary;
 
@@ -27,8 +28,16 @@ pub mod serial;
 pub fn init(boot_info_addr: usize) {
     meta::init(boot_info_addr).expect("kernel failed to retrieve metadata");
 
+    let boot_info = meta::multiboot_info();
+
     gdt::init().expect("kernel failed to initialize GDT");
     idt::init().expect("kernel failed to initialize IDT");
+
+    let elf_sections_tag = boot_info.elf_sections_tag()
+                                    .expect("the bootloader failed to provide elf sections tag");
+    let memory_map_tag = boot_info.memory_map_tag()
+                                  .expect("the bootloader failed to provide memory map tag");
+    memory::init(elf_sections_tag, memory_map_tag).expect("kernel failed to initialize memory");
 }
 
 pub fn hlt_loop() -> ! {
