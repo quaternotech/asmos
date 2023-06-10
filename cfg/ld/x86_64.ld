@@ -23,39 +23,72 @@ KERNEL_OFFSET = 0xFFFFFFFF80000000;
 
 SECTIONS {
     . = 1M;
+    KERNEL_BEGIN = .;
 
-    .prelude ALIGN(4K) : {
+    .preliminary ALIGN(4K) : {
 		KEEP(*(.preliminary.multiboot))
-		KEEP(*(.preliminary .preliminary.*))
+		KEEP(*(.preliminary*))
     }
 
     . += KERNEL_OFFSET;
 
 	.text ALIGN(4K) : AT(ADDR(.text) - KERNEL_OFFSET) {
-		*(.text .text.*)
+		*(.text*)
 	}
 
 	.rodata ALIGN(4K) : AT(ADDR(.rodata) - KERNEL_OFFSET) {
-        *(.rodata .rodata.*)
+        *(.rodata*)
     }
 
 	.data ALIGN(4K) : AT(ADDR(.data) - KERNEL_OFFSET) {
-        *(.data .data.*)
+        *(.data*)
     }
 
     .bss ALIGN(4K) : AT(ADDR(.bss) - KERNEL_OFFSET) {
-        *(.bss .bss.*)
+        *(.bss*)
     }
 
     .got ALIGN(4K) : AT(ADDR(.got) - KERNEL_OFFSET) {
-        *(.got .got.*)
+        *(.got*)
     }
 
+    .debug ALIGN(4K) - KERNEL_OFFSET : {
+        *(.debug_abbrev)
+        *(.debug_info)
+        *(.debug_line)
+        *(.debug_str)
+
+        KEEP(*(.debug*))
+    }
+
+    .symtab . - KERNEL_OFFSET : {
+        KEEP(*(.symtab))
+    }
+
+    .strtab . - KERNEL_OFFSET : {
+        KEEP(*(.strtab))
+    }
+
+    .shstrtab . - KERNEL_OFFSET : {
+        KEEP(*(.shstrtab))
+    }
+
+    .stab . - KERNEL_OFFSET : {
+        KEEP(*(.stab))
+    }
+
+    .stabstr . - KERNEL_OFFSET : {
+        KEEP(*(.stabstr))
+    }
+
+    . = ALIGN(4K);
+    KERNEL_END = .;
+
 	/DISCARD/ : {
-		*(.comment .comment.*)
-        *(.eh_frame .eh_frame.*)
-        *(.gcc_except_table .gcc_except_table.*)
-        *(.note .note.*)
-        *(.rel.eh_frame .rel.eh_frame.*)
+        *(.comment*)
+        *(.eh_frame*)
+        *(.gcc_except_table*)
+        *(.note*)
+        *(.rel.eh_frame*)
 	}
 }

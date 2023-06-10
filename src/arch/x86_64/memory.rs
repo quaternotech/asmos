@@ -17,12 +17,16 @@
 use multiboot2::{ElfSectionsTag, MemoryMapTag};
 use x86_64::structures::paging::{PageSize, Size4KiB};
 
-use crate::serial_println;
+use crate::{serial_print, serial_println};
 
 pub fn init(elf_sections_tag: ElfSectionsTag, _memory_map_tag: &'static MemoryMapTag)
             -> Result<(), ()> {
     let mut mem_occupied = 0;
     for section in elf_sections_tag.sections() {
+        if section.size() == 0 {
+            serial_print!("\t");
+        }
+        serial_println!("{}, {:#X}, {:#X}", section.name().unwrap(), section.size(), section.start_address());
         mem_occupied += section.size();
     }
 
