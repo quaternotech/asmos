@@ -32,7 +32,7 @@ pub extern "C" fn k_main(boot_info_addr: usize) -> ! {
 
 #[panic_handler]
 fn on_panic(panic_info: &PanicInfo) -> ! {
-    serial_println!("{:#?}", panic_info.message());
+    serial_println!("EXCEPTION OCCURRED => {:#?}", panic_info.message());
 
     asmos::hlt_loop();
 }

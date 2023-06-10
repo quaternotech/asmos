@@ -19,7 +19,7 @@ use x86_64::structures::paging::{PageSize, Size4KiB};
 
 use crate::serial_println;
 
-pub fn init(elf_sections_tag: ElfSectionsTag, memory_map_tag: &'static MemoryMapTag)
+pub fn init(elf_sections_tag: ElfSectionsTag, _memory_map_tag: &'static MemoryMapTag)
             -> Result<(), ()> {
     let mut mem_occupied = 0;
     for section in elf_sections_tag.sections() {
@@ -27,7 +27,7 @@ pub fn init(elf_sections_tag: ElfSectionsTag, memory_map_tag: &'static MemoryMap
     }
 
     let mem_needed = x86_64::align_up(mem_occupied, Size4KiB::SIZE);
-    serial_println!("{} - {}",mem_occupied, mem_needed);
+    serial_println!("{} - {}", mem_occupied, mem_needed);
 
     Ok(())
 }

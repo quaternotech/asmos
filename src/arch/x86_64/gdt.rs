@@ -22,7 +22,7 @@ use x86_64::structures::gdt::{Descriptor, GlobalDescriptorTable, SegmentSelector
 use x86_64::structures::tss::TaskStateSegment;
 use x86_64::VirtAddr;
 
-use super::exceptions::DoubleFaultException;
+use super::exceptions::DoubleFault;
 
 pub const STACK_SIZE: usize = 8192;
 
@@ -38,7 +38,7 @@ lazy_static! {
     static ref TSS: TaskStateSegment = {
         let mut tss = TaskStateSegment::new();
 
-        tss.interrupt_stack_table[DoubleFaultException::IST_INDEX] = {
+        tss.interrupt_stack_table[DoubleFault::IST_INDEX] = {
             static mut STACK: [u8; STACK_SIZE] = [0; STACK_SIZE];
             let stack_bottom = VirtAddr::from_ptr(unsafe { &STACK });
             let stack_top = stack_bottom + STACK_SIZE;
