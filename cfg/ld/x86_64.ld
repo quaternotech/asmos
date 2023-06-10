@@ -52,7 +52,37 @@ SECTIONS {
         *(.got*)
     }
 
-    .debug ALIGN(4K) - KERNEL_OFFSET : {
+    .stab : AT(ADDR(.stab) - KERNEL_OFFSET) {
+        KEEP(*(.stab))
+    }
+
+    .stabstr : AT(ADDR(.stabstr) - KERNEL_OFFSET) {
+        KEEP(*(.stabstr))
+    }
+
+    /*
+    Bug:
+        These sections aren't being included as intended.
+        The size calculated by markers is incorrect.
+    */
+
+    .symtab : AT(ADDR(.symtab) - KERNEL_OFFSET) {
+        KEEP(*(.symtab))
+    }
+
+    .strtab : AT(ADDR(.strtab) - KERNEL_OFFSET) {
+        KEEP(*(.strtab))
+    }
+
+    .shstrtab : AT(ADDR(.shstrtab) - KERNEL_OFFSET) {
+        KEEP(*(.shstrtab))
+    }
+
+    /* * */
+
+    . -= KERNEL_OFFSET;
+
+    .debug ALIGN(4K) : {
         *(.debug_abbrev)
         *(.debug_info)
         *(.debug_line)
@@ -61,27 +91,7 @@ SECTIONS {
         KEEP(*(.debug*))
     }
 
-    .symtab . - KERNEL_OFFSET : {
-        KEEP(*(.symtab))
-    }
-
-    .strtab . - KERNEL_OFFSET : {
-        KEEP(*(.strtab))
-    }
-
-    .shstrtab . - KERNEL_OFFSET : {
-        KEEP(*(.shstrtab))
-    }
-
-    .stab . - KERNEL_OFFSET : {
-        KEEP(*(.stab))
-    }
-
-    .stabstr . - KERNEL_OFFSET : {
-        KEEP(*(.stabstr))
-    }
-
-    . = ALIGN(4K);
+    . = ALIGN(2M);
     KERNEL_END = .;
 
 	/DISCARD/ : {
