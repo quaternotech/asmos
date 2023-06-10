@@ -22,8 +22,8 @@ ENTRY(start)
 KERNEL_OFFSET = 0xFFFFFFFF80000000;
 
 SECTIONS {
-    . = 1M;
     KERNEL_BEGIN = .;
+    . = 1M;
 
     .preliminary ALIGN(4K) : {
 		KEEP(*(.preliminary.multiboot))

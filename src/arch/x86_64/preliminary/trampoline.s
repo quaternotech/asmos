@@ -182,7 +182,7 @@ set_up_page_tables:
     mov ebx, 0b10000011
 
     mov ecx, 0
-    mov edx, INITIAL_MAPPING_SIZE_PA
+    lea edx, [KERNEL_END]
     shr edx, 21
 .map_page_directory:
     mov dword ptr [eax + ecx * 8], ebx

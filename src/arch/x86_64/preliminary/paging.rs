@@ -14,8 +14,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use super::configurations::CONFIG_CORE_MEMORY_INITIAL_MAPPING_SIZE;
-
 // The page table consists of 512 entries, with each entry having a size of 8 bytes.
 // Therefore, the total size of the page table is calculated as 512 * 8 = 4096 bytes.
 macro_rules! table_size {
@@ -32,11 +30,6 @@ macro_rules! table_default {
         PageTable([0; table_size!()])
     };
 }
-
-// The initial mapping size used for the core memory. This value is retrieved
-// from the CONFIG_CORE_MEMORY_INITIAL_MAPPING_SIZE configuration option
-#[no_mangle]
-static INITIAL_MAPPING_SIZE: usize = CONFIG_CORE_MEMORY_INITIAL_MAPPING_SIZE;
 
 #[repr(C, align(4096))]
 struct PageTable([u8; table_size!()]);
