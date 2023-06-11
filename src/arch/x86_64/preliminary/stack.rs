@@ -26,10 +26,10 @@ macro_rules! stack_default {
 }
 
 #[no_mangle]
-static KERNEL_STACK_SIZE: usize = CONFIG_CORE_MEMORY_STACK_SIZE;
+pub static KERNEL_STACK_SIZE: usize = CONFIG_CORE_MEMORY_STACK_SIZE;
 
 #[repr(C, align(4096))]
-struct Stack<const SIZE: usize>([u8; SIZE]);
+pub struct Stack<const SIZE: usize>([u8; SIZE]);
 
 #[no_mangle]
-static mut KERNEL_STACK: Stack<{ CONFIG_CORE_MEMORY_STACK_SIZE }> = stack_default!();
+pub static mut KERNEL_STACK: Stack<{ CONFIG_CORE_MEMORY_STACK_SIZE }> = stack_default!();

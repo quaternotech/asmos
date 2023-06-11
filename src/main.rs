@@ -19,13 +19,26 @@
 #![feature(lang_items)]
 #![feature(panic_info_message)]
 
+use alloc::vec;
 use core::panic::PanicInfo;
+
+extern crate alloc;
 
 use asmos::serial_println;
 
 #[no_mangle]
 pub extern "C" fn k_main(boot_info_addr: usize) -> ! {
     asmos::init(boot_info_addr);
+
+    {
+        let v = vec![3, 5, 6, 6];
+        for x in v.iter() {
+            serial_println!("{}", x);
+        }
+        serial_println!("{:?}", v.as_ptr());
+    }
+    let v = vec![3, 5, 6, 6];
+    serial_println!("{:?}", v.as_ptr());
 
     asmos::hlt_loop();
 }
