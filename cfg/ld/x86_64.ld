@@ -60,26 +60,6 @@ SECTIONS {
         KEEP(*(.stabstr))
     }
 
-    /*
-    Bug:
-        These sections aren't being included as intended.
-        The size calculated by markers is incorrect.
-    */
-
-    .symtab : AT(ADDR(.symtab) - KERNEL_OFFSET) {
-        KEEP(*(.symtab))
-    }
-
-    .strtab : AT(ADDR(.strtab) - KERNEL_OFFSET) {
-        KEEP(*(.strtab))
-    }
-
-    .shstrtab : AT(ADDR(.shstrtab) - KERNEL_OFFSET) {
-        KEEP(*(.shstrtab))
-    }
-
-    /* * */
-
     . -= KERNEL_OFFSET;
 
     .debug ALIGN(4K) : {
@@ -89,6 +69,18 @@ SECTIONS {
         *(.debug_str)
 
         KEEP(*(.debug*))
+    }
+
+    .symtab : {
+        *(.symtab)
+    }
+
+    .strtab : {
+        *(.strtab)
+    }
+
+    .shstrtab : {
+        *(.shstrtab)
     }
 
     . = ALIGN(2M);
