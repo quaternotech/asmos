@@ -17,6 +17,7 @@
 use x86_64::instructions;
 
 mod allocator;
+mod framebuffer;
 mod exceptions;
 mod gdt;
 mod idt;
@@ -25,6 +26,7 @@ mod meta;
 mod preliminary;
 
 pub mod serial;
+mod fonts;
 
 pub fn init(boot_info_addr: usize) {
     meta::init(boot_info_addr).expect("kernel failed to retrieve metadata");
@@ -38,6 +40,11 @@ pub fn init(boot_info_addr: usize) {
                                   .expect("the bootloader failed to provide memory map tag");
     memory::init(memory_map_tag).expect("kernel failed to initialize memory");
     allocator::init().expect("kernel failed to initialize allocator");
+
+    let framebuffer_tag = boot_info.framebuffer_tag()
+                                   .expect("the bootloader failed to provide VBE framebuffer");
+    let framebuffer_tag = framebuffer_tag.expect("unrecognized VBE framebuffer");
+    framebuffer::init(framebuffer_tag).expect("kernel failed to initialize framebuffer");
 }
 
 pub fn hlt_loop() -> ! {
