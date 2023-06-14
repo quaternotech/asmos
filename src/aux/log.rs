@@ -14,8 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use log::Log;
 use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
+use log::Log;
 
 use crate::{serial_print, serial_println};
 

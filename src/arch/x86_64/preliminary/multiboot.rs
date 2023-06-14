@@ -14,212 +14,50 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-macro_rules! header_magic {
-    () => {
-        0xE85250D6
-    };
-}
+use crate::define;
 
-macro_rules! header_arch {
-    () => {
-        0
-    };
-}
-macro_rules! header_size {
-    () => {
-        core::mem::size_of::<MultibootHeader>() as u32
-    };
-}
-macro_rules! header_checksum {
-    () => {
-        -(header_magic!() + header_arch!() + header_size!() as isize) as u32
-    };
-}
+define!(header_magic, 0xE85250D6);
+define!(header_arch, 0);
+define!(header_size, core::mem::size_of::<MultibootHeader>() as u32);
+define!(header_checksum, -(header_magic!() + header_arch!() + header_size!() as isize) as u32);
 
-macro_rules! header_tag_end {
-    () => {
-        0
-    };
-}
-macro_rules! header_tag_info_request {
-    () => {
-        1
-    };
-}
-// macro_rules! header_tag_address {
-//     () => {
-//         2
-//     };
-// }
-// macro_rules! header_tag_entry_address {
-//     () => {
-//         3
-//     };
-// }
-macro_rules! header_tag_console_flags {
-    () => {
-        4
-    };
-}
-macro_rules! header_tag_framebuffer {
-    () => {
-        5
-    };
-}
-// macro_rules! header_tag_module_align {
-//     () => {
-//         6
-//     };
-// }
-// macro_rules! header_tag_efi_bs {
-//     () => {
-//         7
-//     };
-// }
-// macro_rules! header_tag_entry_address_efi32 {
-//     () => {
-//         8
-//     };
-// }
-// macro_rules! header_tag_entry_address_efi64 {
-//     () => {
-//         9
-//     };
-// }
-// macro_rules! header_tag_relocatable {
-//     () => {
-//         10
-//     };
-// }
+define!(header_tag_end, 0);
+define!(header_tag_info_request, 1);
+// define!(header_tag_address, 2);
+// define!(header_tag_entry_address, 3);
+define!(header_tag_console_flags, 4);
+define!(header_tag_framebuffer, 5);
+// define!(header_tag_module_align, 6);
+// define!(header_tag_efi_bs, 7);
+// define!(header_tag_entry_address_efi32, 8);
+// define!(header_tag_entry_address_efi64, 9);
+// define!(header_tag_relocatable, 10);
 
-// macro_rules! tag_align {
-//     () => {
-//         8
-//     };
-// }
+// define!(tag_type_end, 0);
+// define!(tag_type_cmdline, 1);
+// define!(tag_type_boot_loader_name, 2);
+// define!(tag_type_module, 3);
+// define!(tag_type_basic_mem_info, 4);
+// define!(tag_type_boot_dev, 5);
+define!(tag_type_mem_map, 6);
+// define!(tag_type_vbe, 7);
+// define!(tag_type_framebuffer, 8);
+// define!(tag_type_elf_sections, 9);
+// define!(tag_type_apm, 10);
+// define!(tag_type_efi32, 11);
+// define!(tag_type_efi64, 12);
+// define!(tag_type_sys_man_bios, 13);
+// define!(tag_type_acpi_old, 14);
+// define!(tag_type_acpi_new, 15);
+// define!(tag_type_network, 16);
+// define!(tag_type_efi_mem_map, 17);
+// define!(tag_type_efi_bs, 18);
+// define!(tag_type_efi32_ih, 19);
+// define!(tag_type_efi64_ih, 20);
+// define!(tag_type_load_base_addr, 21);
 
-// macro_rules! tag_type_end {
-//     () => {
-//         0
-//     };
-// }
-// macro_rules! tag_type_cmdline {
-//     () => {
-//         1
-//     };
-// }
-// macro_rules! tag_type_boot_loader_name {
-//     () => {
-//         2
-//     };
-// }
-// macro_rules! tag_type_module {
-//     () => {
-//         3
-//     };
-// }
-// macro_rules! tag_type_basic_mem_info {
-//     () => {
-//         4
-//     };
-// }
-// macro_rules! tag_type_boot_dev {
-//     () => {
-//         5
-//     };
-// }
-macro_rules! tag_type_mem_map {
-    () => {
-        6
-    };
-}
-// macro_rules! tag_type_vbe {
-//     () => {
-//         7
-//     };
-// }
-// macro_rules! tag_type_framebuffer {
-//     () => {
-//         8
-//     };
-// }
-// macro_rules! tag_type_elf_sections {
-//     () => {
-//         9
-//     };
-// }
-// macro_rules! tag_type_apm {
-//     () => {
-//         10
-//     };
-// }
-// macro_rules! tag_type_efi32 {
-//     () => {
-//         11
-//     };
-// }
-// macro_rules! tag_type_efi64 {
-//     () => {
-//         12
-//     };
-// }
-// macro_rules! tag_type_sys_man_bios {
-//     () => {
-//         13
-//     };
-// }
-// macro_rules! tag_type_acpi_old {
-//     () => {
-//         14
-//     };
-// }
-// macro_rules! tag_type_acpi_new {
-//     () => {
-//         15
-//     };
-// }
-// macro_rules! tag_type_network {
-//     () => {
-//         16
-//     };
-// }
-// macro_rules! tag_type_efi_mem_map {
-//     () => {
-//         17
-//     };
-// }
-// macro_rules! tag_type_efi_bs {
-//     () => {
-//         18
-//     };
-// }
-// macro_rules! tag_type_efi32_ih {
-//     () => {
-//         19
-//     };
-// }
-// macro_rules! tag_type_efi64_ih {
-//     () => {
-//         20
-//     };
-// }
-// macro_rules! tag_type_load_base_addr {
-//     () => {
-//         21
-//     };
-// }
-
-macro_rules! flags_none {
-    () => {
-        0
-    };
-}
-
-macro_rules! flags_framebuffer {
-    () => {
-        1
-    };
-}
+define!(flags_none, 0);
+define!(flags_framebuffer, 1);
 
 macro_rules! tag {
     ($type_:expr, $flags:expr, $size:expr) => {
@@ -261,21 +99,9 @@ macro_rules! tag_framebuffer_request {
     };
 }
 
-macro_rules! framebuffer_width {
-    () => {
-        80
-    };
-}
-macro_rules! framebuffer_height {
-    () => {
-        25
-    };
-}
-macro_rules! framebuffer_depth {
-    () => {
-        0
-    };
-}
+define!(framebuffer_width, 80);
+define!(framebuffer_height, 25);
+define!(framebuffer_depth, 0);
 
 macro_rules! tag_end {
     () => {

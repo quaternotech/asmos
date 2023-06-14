@@ -21,6 +21,7 @@ use spin::{Mutex, MutexGuard};
 pub use bump::BumpAllocator;
 pub use linked_list::LinkedListAllocator;
 pub use pool::PoolAllocator;
+
 use crate::arch::x86_64::memory::{HEAP_SIZE, HEAP_START};
 
 mod bump;

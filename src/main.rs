@@ -19,10 +19,10 @@
 #![feature(lang_items)]
 #![feature(panic_info_message)]
 
+extern crate alloc;
+
 use alloc::vec;
 use core::panic::PanicInfo;
-
-extern crate alloc;
 
 use asmos::serial_println;
 

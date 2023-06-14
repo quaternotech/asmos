@@ -17,8 +17,8 @@
 use lazy_static::lazy_static;
 use multiboot2::FramebufferTag;
 
-use crate::arch::x86_64::meta;
 use crate::{serial_print, serial_println};
+use crate::arch::x86_64::meta;
 
 pub fn init(framebuffer_tag: FramebufferTag) -> Result<(), ()> {
     serial_println!("{:X}", framebuffer_tag.address);
@@ -50,5 +50,4 @@ pub fn put_pixel(vram: u64, pitch: u32, pix_width: u8, x: u32, y: u32, color: u3
     unsafe { *dest = color };
 }
 
-pub fn put_char(vram: u64, pitch: u32, pix_width: u8, x: u32, y: u32, color: u32, c: char) {
-}
+pub fn put_char(vram: u64, pitch: u32, pix_width: u8, x: u32, y: u32, color: u32, c: char) {}

@@ -14,9 +14,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-mod log;
-mod macros;
-
-pub fn init() {
-    log::init().expect("logger can only be initialized once");
+#[macro_export]
+macro_rules! define {
+    ($macro_name:ident, $value:expr) => {
+        macro_rules! $macro_name {
+            () => {
+                $value
+            };
+        }
+    };
 }
