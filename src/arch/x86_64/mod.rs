@@ -22,13 +22,14 @@ mod framebuffer;
 mod gdt;
 mod idt;
 mod memory;
-mod meta;
 mod preliminary;
+
+pub mod meta;
 
 pub mod serial;
 mod fonts;
 
-pub fn init(boot_info_addr: usize) {
+pub(crate) fn init(boot_info_addr: usize) {
     meta::init(boot_info_addr).expect("kernel failed to retrieve metadata");
 
     let boot_info = meta::multiboot_info();
@@ -47,9 +48,13 @@ pub fn init(boot_info_addr: usize) {
     framebuffer::init(framebuffer_tag).expect("kernel failed to initialize framebuffer");
 }
 
-pub fn hlt_loop() -> ! {
+pub(crate) fn hlt_loop() -> ! {
     loop {
         instructions::hlt();
         core::hint::spin_loop();
     }
+}
+
+pub fn get() -> &'static str {
+    "x86_64"
 }

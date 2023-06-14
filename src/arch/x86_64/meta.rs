@@ -16,6 +16,8 @@
 
 use multiboot2::BootInformation;
 
+use super::preliminary::configurations::Configurations;
+
 macro_rules! foreign_symbol {
     ($symbol:ident) => {
         unsafe { &$symbol as *const u8 as u64 }
@@ -26,11 +28,12 @@ extern "C" {
     static KERNEL_BEGIN: u8;
     static KERNEL_END: u8;
     static KERNEL_OFFSET: u8;
+    static KERNEL_STACK: u8;
 }
 
 static mut MULTIBOOT_INFO: Option<BootInformation> = None;
 
-pub fn init(boot_info_addr: usize) -> Result<(), ()> {
+pub(crate) fn init(boot_info_addr: usize) -> Result<(), ()> {
     unsafe {
         MULTIBOOT_INFO = multiboot2::load(boot_info_addr).ok();
     }
@@ -52,4 +55,12 @@ pub fn kernel_end() -> u64 {
 
 pub fn kernel_offset() -> u64 {
     foreign_symbol!(KERNEL_OFFSET)
+}
+
+pub fn stack_start() -> u64 {
+    foreign_symbol!(KERNEL_STACK)
+}
+
+pub fn stack_end() -> u64 {
+    stack_start() + Configurations::KERNEL_STACK_SIZE as u64
 }
