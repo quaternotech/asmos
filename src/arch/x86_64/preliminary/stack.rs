@@ -14,22 +14,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use super::configurations::CONFIG_CORE_MEMORY_STACK_SIZE;
+use super::configurations::Configurations;
 
 // The `stack_default` macro generates a default stack with a specific size.
 // It creates a `Stack` struct with an underlying array of zeros. The size of
 // the array is determined by the `CONFIG_CORE_MEMORY_STACK_SIZE` constant.
 macro_rules! stack_default {
     () => {
-        Stack([0; CONFIG_CORE_MEMORY_STACK_SIZE])
+        Stack([0; Configurations::KERNEL_STACK_SIZE])
     };
 }
 
 #[no_mangle]
-pub static KERNEL_STACK_SIZE: usize = CONFIG_CORE_MEMORY_STACK_SIZE;
+static KERNEL_STACK_SIZE: usize = Configurations::KERNEL_STACK_SIZE;
 
 #[repr(C, align(4096))]
 pub struct Stack<const SIZE: usize>([u8; SIZE]);
 
 #[no_mangle]
-pub static mut KERNEL_STACK: Stack<{ CONFIG_CORE_MEMORY_STACK_SIZE }> = stack_default!();
+pub static mut KERNEL_STACK: Stack<{ Configurations::KERNEL_STACK_SIZE }> = stack_default!();

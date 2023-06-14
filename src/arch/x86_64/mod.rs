@@ -17,8 +17,8 @@
 use x86_64::instructions;
 
 mod allocator;
-mod framebuffer;
 mod exceptions;
+mod framebuffer;
 mod gdt;
 mod idt;
 mod memory;

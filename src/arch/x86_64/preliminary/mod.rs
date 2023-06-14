@@ -19,7 +19,7 @@ use core::arch::global_asm;
 pub mod configurations;
 mod multiboot;
 mod paging;
-pub mod stack;
+mod stack;
 
 // This assembly file contains essential instructions for configuring fundamental system
 // settings and transitioning into the long mode of the processor. By incorporating this

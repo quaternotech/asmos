@@ -14,25 +14,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::define;
+
 // The page table consists of 512 entries, with each entry having a size of 8 bytes.
 // Therefore, the total size of the page table is calculated as 512 * 8 = 4096 bytes.
-macro_rules! table_size {
-    () => {
-        4096
-    };
-}
+define!(page_table_size, 4096);
 
 // The `table_default` macro generates a default page table with a specific size.
 // It creates a `PageTable` struct with an underlying array of zeros. The size of
 // the array is determined by the `table_size!()` macro.
 macro_rules! table_default {
     () => {
-        PageTable([0; table_size!()])
+        PageTable([0; page_table_size!()])
     };
 }
 
 #[repr(C, align(4096))]
-struct PageTable([u8; table_size!()]);
+struct PageTable([u8; page_table_size!()]);
 
 #[no_mangle]
 static mut PT4: PageTable = table_default!();

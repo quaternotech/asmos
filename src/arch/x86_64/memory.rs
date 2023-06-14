@@ -17,23 +17,18 @@
 use core::iter::zip;
 
 use multiboot2::MemoryMapTag;
-use x86_64::{PhysAddr, registers, VirtAddr};
+use x86_64::{PhysAddr, VirtAddr};
 use x86_64::registers::control::Cr3;
 use x86_64::structures::paging::{OffsetPageTable, Page, PageTable, PageTableFlags, PhysFrame, Size2MiB, Size4KiB};
 use x86_64::structures::paging::{FrameAllocator, Mapper, PageSize};
 use x86_64::structures::paging::mapper::MapToError;
 
 use crate::arch::x86_64::meta;
-use crate::arch::x86_64::meta::{kernel_end, kernel_offset};
-use crate::arch::x86_64::preliminary::stack::{KERNEL_STACK, KERNEL_STACK_SIZE, Stack};
 use crate::serial_println;
-
-use super::preliminary::configurations::CONFIG_CORE_MEMORY_STACK_SIZE;
 
 pub const PHYSICAL_MEMORY_OFFSET: u64 = 0xFFFF_8000_0000_0000;
 pub const HEAP_START: u64 = 0xFFFF_C000_0000_0000;
 pub const HEAP_SIZE: u64 = 0x200000;
-pub const RELOCATED_STACK: u64 = 0xFFFF_FF80_0000_0000;
 
 pub struct AreaFrameAllocator {
     memory_map_tag: &'static MemoryMapTag,

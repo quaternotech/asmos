@@ -28,3 +28,9 @@ macro_rules! load_generated_config {
 }
 
 load_generated_config!();
+
+pub struct Configurations;
+
+impl Configurations {
+    pub const KERNEL_STACK_SIZE: usize = CONFIG_CORE_MEMORY_STACK_SIZE;
+}
