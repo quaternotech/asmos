@@ -21,7 +21,6 @@
 
 extern crate alloc;
 
-use alloc::vec;
 use core::panic::PanicInfo;
 
 use asmos::serial_println;

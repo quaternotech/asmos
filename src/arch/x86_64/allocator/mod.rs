@@ -22,7 +22,7 @@ pub use bump::BumpAllocator;
 pub use linked_list::LinkedListAllocator;
 pub use pool::PoolAllocator;
 
-use crate::arch::x86_64::memory::{HEAP_SIZE, HEAP_START};
+use super::meta;
 
 mod bump;
 mod linked_list;
@@ -51,7 +51,7 @@ fn alloc_error_handler(layout: Layout) -> ! { panic!("allocation failure: {:?}",
 fn align_up(addr: usize, align: usize) -> usize { (addr + align - 1) & !(align - 1) }
 
 pub fn init() -> Result<(), ()> {
-    unsafe { ALLOCATOR.lock().init(HEAP_START as usize, HEAP_SIZE as usize) };
+    unsafe { ALLOCATOR.lock().init(meta::heap_begin() as usize, meta::heap_size() as usize) };
 
     Ok(())
 }

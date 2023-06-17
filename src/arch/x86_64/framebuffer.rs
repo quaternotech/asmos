@@ -15,7 +15,9 @@
 // limitations under the License.
 
 use multiboot2::FramebufferTag;
+use x86_64::PhysAddr;
 
+use crate::arch::x86_64::memory;
 use crate::serial_println;
 
 pub fn init(framebuffer_tag: FramebufferTag) -> Result<(), ()> {
@@ -25,7 +27,7 @@ pub fn init(framebuffer_tag: FramebufferTag) -> Result<(), ()> {
     serial_println!("{:?} {:?}", framebuffer_tag.width, framebuffer_tag.height);
     serial_println!("{:?}", framebuffer_tag.buffer_type);
 
-    let vram = framebuffer_tag.address + super::memory::PHYSICAL_MEMORY_OFFSET;
+    let vram = memory::p2v(PhysAddr::new(framebuffer_tag.address)).as_u64();
     let pix_width = framebuffer_tag.bpp / 8;
 
     for i in 0..10 {
