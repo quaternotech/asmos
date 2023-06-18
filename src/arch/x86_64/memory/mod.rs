@@ -25,9 +25,18 @@ use x86_64::structures::paging::page::PageRange;
 
 use super::meta;
 
-mod pmm;
+mod physical;
 
+mod pmm;
+mod pmmv2;
+
+// Todo:
+// 1. Create a physical memory manager: Find and return frames.
+// 2. Virtual memory manager: Map those frames into the virtual space.
+// 3. Linear memory manager: Interface for performing dynamic allocations via heap.
 pub fn init(memory_map_tag: &'static MemoryMapTag) -> Result<(), MapToError<Size2MiB>> {
+    pmmv2::init(memory_map_tag).ok();
+
     unsafe { pmm::init(memory_map_tag) }.expect("kernel failed to initialize physical memory manager");
 
     map_physical_memory(memory_map_tag)?;
@@ -89,16 +98,6 @@ fn get_frame_range<S: PageSize>(begin: u64, size: u64) -> PhysFrameRange<S> {
     PhysFrame::<S>::range(first, last)
 }
 
-fn map_reserved_region(mapper: &mut impl Mapper<Size4KiB>) -> Result<(), MapToError<Size4KiB>> {
-    let frame_range = get_frame_range(0, meta::reserved_region_size());
-    let flags = PageTableFlags::PRESENT | PageTableFlags::WRITABLE;
-    unsafe {
-        pmm::identity_map_range(mapper, flags, frame_range)?;
-    }
-
-    Ok(())
-}
-
 fn map_physical_memory(memory_map_tag: &'static MemoryMapTag) -> Result<(), MapToError<Size2MiB>> {
     // Temporarily use kernel offset.
     let mut mapper = unsafe { get_mapper(meta::kernel_offset()) };
@@ -106,7 +105,7 @@ fn map_physical_memory(memory_map_tag: &'static MemoryMapTag) -> Result<(), MapT
     let flags = PageTableFlags::PRESENT | PageTableFlags::WRITABLE | PageTableFlags::HUGE_PAGE;
     let temp_map_size = 0x400000;
     unsafe {
-        pmm::map_range(&mut mapper, flags, meta::kernel_end(), meta::kernel_end() + meta::kernel_offset(), temp_map_size)?;
+        pmm::map_range(&mut mapper, flags, meta::kernel_end() + 0x200000, meta::kernel_end() + 0x200000 + meta::kernel_offset(), temp_map_size)?;
     }
 
     // Map entire available physical memory at an offset.
@@ -116,9 +115,19 @@ fn map_physical_memory(memory_map_tag: &'static MemoryMapTag) -> Result<(), MapT
     }
 
     // Unmap the temporarily mapped pages after the kernel.
-    let page_range = get_page_range::<Size2MiB>(meta::kernel_end() + meta::kernel_offset(), temp_map_size);
+    let page_range = get_page_range::<Size2MiB>(meta::kernel_end() + 0x200000 + meta::kernel_offset(), temp_map_size);
     unsafe {
         pmm::unmap_range(&mut mapper, page_range).ok();
+    }
+
+    Ok(())
+}
+
+fn map_reserved_region(mapper: &mut impl Mapper<Size4KiB>) -> Result<(), MapToError<Size4KiB>> {
+    let frame_range = get_frame_range(0, meta::reserved_region_size());
+    let flags = PageTableFlags::PRESENT | PageTableFlags::WRITABLE;
+    unsafe {
+        pmm::identity_map_range(mapper, flags, frame_range)?;
     }
 
     Ok(())

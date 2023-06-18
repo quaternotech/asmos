@@ -15,7 +15,6 @@
 // limitations under the License.
 
 use x86_64::instructions;
-use crate::serial_println;
 
 mod allocator;
 mod exceptions;
@@ -41,14 +40,14 @@ pub(crate) fn init(boot_info_addr: usize) {
     let memory_map_tag = boot_info.memory_map_tag()
                                   .expect("the bootloader failed to provide memory map tag");
     memory::init(memory_map_tag).expect("kernel failed to initialize memory");
-    allocator::init().expect("kernel failed to initialize allocator");
+    // allocator::init().expect("kernel failed to initialize allocator");
 
-    let vbe_buffer_tag = boot_info.vbe_info_tag();
-    serial_println!("{:?}", vbe_buffer_tag);
-    let framebuffer_tag = boot_info.framebuffer_tag()
-                                   .expect("the bootloader failed to provide VBE framebuffer");
-    let framebuffer_tag = framebuffer_tag.expect("unrecognized VBE framebuffer");
-    framebuffer::init(framebuffer_tag).expect("kernel failed to initialize framebuffer");
+    // let vbe_buffer_tag = boot_info.vbe_info_tag();
+    // serial_println!("{:?}", vbe_buffer_tag);
+    // let framebuffer_tag = boot_info.framebuffer_tag()
+    //                                .expect("the bootloader failed to provide VBE framebuffer");
+    // let framebuffer_tag = framebuffer_tag.expect("unrecognized VBE framebuffer");
+    // framebuffer::init(framebuffer_tag).expect("kernel failed to initialize framebuffer");
 }
 
 pub(crate) fn hlt_loop() -> ! {
