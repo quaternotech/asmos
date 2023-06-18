@@ -24,7 +24,7 @@ use x86_64::PhysAddr;
 use x86_64::structures::paging::{PageTableFlags, PhysFrame, Size4KiB};
 use x86_64::structures::paging::{FrameAllocator, Mapper, PageSize};
 use x86_64::structures::paging::frame::PhysFrameRange;
-use x86_64::structures::paging::mapper::MapToError;
+use x86_64::structures::paging::mapper::{MapToError, UnmapError};
 use x86_64::structures::paging::page::PageRange;
 
 use super::{get_frame_range, get_page_range};
@@ -115,6 +115,15 @@ pub unsafe fn map_range<S: PageSize>(mapper: &mut impl Mapper<S>,
         unsafe {
             mapper.map_to(page, frame, flags, frame_allocator)?.flush();
         }
+    }
+
+    Ok(())
+}
+
+pub unsafe fn unmap_range<S: PageSize>(mapper: &mut impl Mapper<S>,
+                                       page_range: PageRange<S>) -> Result<(), UnmapError> {
+    for page in page_range {
+        mapper.unmap(page)?.1.flush();
     }
 
     Ok(())

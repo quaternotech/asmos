@@ -36,7 +36,7 @@ const RESERVED_REGION_SIZE: u64 = 0x100000;
 const PHYSICAL_MEMORY_OFFSET: u64 = 0xFFFF_8000_0000_0000;
 
 const HEAP_BEGIN: u64 = 0xFFFF_C000_0000_0000;
-const HEAP_SIZE: u64 = 0x200000;
+const HEAP_SIZE: u64 = 0x400000;
 
 static mut MULTIBOOT_INFO: Option<BootInformation> = None;
 

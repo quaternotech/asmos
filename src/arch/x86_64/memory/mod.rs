@@ -30,31 +30,11 @@ mod pmm;
 pub fn init(memory_map_tag: &'static MemoryMapTag) -> Result<(), MapToError<Size2MiB>> {
     unsafe { pmm::init(memory_map_tag) }.expect("kernel failed to initialize physical memory manager");
 
-    // We haven't mapped physical memory to an offset yet. So, we use the kernel offset for now.
-    // I need to replace this kernel offset with physical memory offset in order to make it work.
-    // This means that, I must allocate physical memory and use that mapper table.
-    let mut mapper = unsafe { get_mapper(meta::kernel_offset()) };
-
-    let kernel_size = meta::kernel_size();
-
-    {
-        let mut frame_allocator = pmm::PHYSICAL_MEMORY_MANAGER.lock();
-        let frame_allocator = frame_allocator.as_mut().unwrap();
-
-        // Todo: This is a temporary fix. This needs to be handled properly in the page fault handler.
-        let phys_frame = PhysFrame::<Size2MiB>::containing_address(PhysAddr::new(kernel_size));
-        let page = Page::<Size2MiB>::containing_address(VirtAddr::new(kernel_size + meta::kernel_offset()));
-        let flags = PageTableFlags::PRESENT | PageTableFlags::WRITABLE | PageTableFlags::HUGE_PAGE;
-        unsafe {
-            mapper.map_to(page, phys_frame, flags, frame_allocator)?.flush();
-        }
-    }
-
-    map_reserved_region(&mut mapper).ok();
-    map_physical_memory(memory_map_tag, &mut mapper)?;
+    map_physical_memory(memory_map_tag)?;
 
     let mut mapper = unsafe { get_mapper(meta::physical_memory_offset()) };
 
+    map_reserved_region(&mut mapper).ok();
     allocate_heap(&mut mapper).ok();
 
     Ok(())
@@ -119,12 +99,26 @@ fn map_reserved_region(mapper: &mut impl Mapper<Size4KiB>) -> Result<(), MapToEr
     Ok(())
 }
 
-fn map_physical_memory(memory_map_tag: &'static MemoryMapTag,
-                       mapper: &mut impl Mapper<Size2MiB>) -> Result<(), MapToError<Size2MiB>> {
-    let total_available_memory = total_memory_aligned::<Size2MiB>(memory_map_tag);
+fn map_physical_memory(memory_map_tag: &'static MemoryMapTag) -> Result<(), MapToError<Size2MiB>> {
+    // Temporarily use kernel offset.
+    let mut mapper = unsafe { get_mapper(meta::kernel_offset()) };
+    // Temporarily map some pages at the end of the kernel.
     let flags = PageTableFlags::PRESENT | PageTableFlags::WRITABLE | PageTableFlags::HUGE_PAGE;
+    let temp_map_size = 0x400000;
     unsafe {
-        pmm::map_range(mapper, flags, 0, meta::physical_memory_offset(), total_available_memory)?;
+        pmm::map_range(&mut mapper, flags, meta::kernel_end(), meta::kernel_end() + meta::kernel_offset(), temp_map_size)?;
+    }
+
+    // Map entire available physical memory at an offset.
+    let total_available_memory = total_memory_aligned::<Size2MiB>(memory_map_tag);
+    unsafe {
+        pmm::map_range(&mut mapper, flags, 0, meta::physical_memory_offset(), total_available_memory)?;
+    }
+
+    // Unmap the temporarily mapped pages after the kernel.
+    let page_range = get_page_range::<Size2MiB>(meta::kernel_end() + meta::kernel_offset(), temp_map_size);
+    unsafe {
+        pmm::unmap_range(&mut mapper, page_range).ok();
     }
 
     Ok(())
