@@ -24,6 +24,7 @@ use x86_64::structures::paging::PhysFrame;
 
 pub use bitmap::BitmapAllocator;
 pub use dummy::DummyAllocator;
+use crate::serial_println;
 
 mod bitmap;
 mod dummy;
@@ -32,12 +33,10 @@ pub fn init(memory_map_tag: &'static MemoryMapTag) -> Result<(), ()> {
     let mut pmm = BitmapAllocator::new(memory_map_tag);
 
     // Mark pages occupied by kernel and memory allocator as used.
-    loop {
-        if let Some(frame) = pmm.allocate_frame() {
-            // todo: This is very brittle. Must fix in future.
-            if frame.start_address().as_u64() >= 0x3FF000 {
-                break;
-            }
+    while let Some(frame) = pmm.allocate_frame() {
+        // todo: This is very brittle. Must fix in future.
+        if frame.start_address().as_u64() >= 0x3FF000 {
+            break;
         }
     }
 

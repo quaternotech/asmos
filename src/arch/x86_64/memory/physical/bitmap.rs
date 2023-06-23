@@ -132,6 +132,12 @@ unsafe impl FrameAllocator<Size4KiB> for BitmapAllocator {
 
             let ptr = (bitmap as usize + i) as *mut u8;
             let value = unsafe { *ptr };
+
+            if value == u8::MAX {
+                cur = unsafe { (*cur).next };
+                continue;
+            }
+
             let mut j = 0;
             while j < 8 {
                 if ((value >> j) & 1) == 0 {
