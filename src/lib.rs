@@ -19,6 +19,7 @@
 #![feature(alloc_error_handler)]
 #![feature(const_mut_refs)]
 #![feature(naked_functions)]
+#![feature(trusted_random_access)]
 
 extern crate alloc;
 

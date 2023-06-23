@@ -16,13 +16,13 @@
 
 use x86_64::instructions;
 
-mod allocator;
-mod exceptions;
-mod framebuffer;
-mod gdt;
-mod idt;
-mod memory;
-mod preliminary;
+pub mod allocator;
+pub mod exceptions;
+pub mod framebuffer;
+pub mod gdt;
+pub mod idt;
+pub mod memory;
+pub mod preliminary;
 
 pub mod meta;
 

@@ -14,5 +14,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod bitmap;
-pub mod dummy;
+use x86_64::structures::paging::{PhysFrame, Size2MiB, Size4KiB};
+use x86_64::structures::paging::FrameAllocator;
+
+pub struct DummyAllocator {}
+
+unsafe impl FrameAllocator<Size4KiB> for DummyAllocator {
+    fn allocate_frame(&mut self) -> Option<PhysFrame<Size4KiB>> {
+        None
+    }
+}
+
+unsafe impl FrameAllocator<Size2MiB> for DummyAllocator {
+    fn allocate_frame(&mut self) -> Option<PhysFrame<Size2MiB>> {
+        None
+    }
+}

@@ -14,4 +14,59 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod mm;
+use core::ops::Range;
+
+use multiboot2::MemoryMapTag;
+use x86_64::PhysAddr;
+use x86_64::structures::paging::{FrameAllocator, PageSize};
+use x86_64::structures::paging::frame::PhysFrameRange;
+use x86_64::structures::paging::PhysFrame;
+
+pub use bitmap::BitmapAllocator;
+pub use dummy::DummyAllocator;
+
+mod bitmap;
+mod dummy;
+
+pub fn init(memory_map_tag: &'static MemoryMapTag) -> Result<(), ()> {
+    let mut pmm = BitmapAllocator::new(memory_map_tag);
+
+    // Mark pages occupied by kernel and memory allocator as used.
+    loop {
+        if let Some(frame) = pmm.allocate_frame() {
+            // todo: This is very brittle. Must fix in future.
+            if frame.start_address().as_u64() >= 0x3FF000 {
+                break;
+            }
+        }
+    }
+
+    Ok(())
+}
+
+pub fn total_memory(memory_map_tag: &'static MemoryMapTag) -> u64 {
+    memory_map_tag.available_memory_areas().map(|area| area.size()).sum::<u64>()
+}
+
+pub fn total_memory_aligned<S: PageSize>(memory_map_tag: &'static MemoryMapTag) -> u64 {
+    x86_64::align_up(total_memory(memory_map_tag), S::SIZE)
+}
+
+fn get_usable_areas<S: PageSize>(memory_map_tag: &'static MemoryMapTag) -> impl Iterator<Item=Range<u64>> {
+    memory_map_tag.available_memory_areas()
+                  .map(
+                      |area| {
+                          x86_64::align_up(area.start_address(), S::SIZE)
+                              ..
+                              x86_64::align_down(area.end_address(), S::SIZE)
+                      }
+                  ).filter(|aligned_area| aligned_area.end - aligned_area.start >= S::SIZE)
+}
+
+fn get_frame_range<S: PageSize>(begin: u64, size: u64) -> PhysFrameRange<S> {
+    let begin = PhysAddr::new(begin);
+    let end = begin + size;
+    let first = PhysFrame::<S>::containing_address(begin);
+    let last = PhysFrame::<S>::containing_address(end);
+    PhysFrame::<S>::range(first, last)
+}
