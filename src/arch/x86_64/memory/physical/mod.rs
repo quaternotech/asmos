@@ -24,18 +24,25 @@ use x86_64::structures::paging::PhysFrame;
 
 pub use bitmap::BitmapAllocator;
 pub use dummy::DummyAllocator;
-use crate::serial_println;
+use crate::arch::meta::kernel_end;
 
 mod bitmap;
 mod dummy;
 
-pub fn init(memory_map_tag: &'static MemoryMapTag) -> Result<(), ()> {
-    let mut pmm = BitmapAllocator::new(memory_map_tag);
+pub static mut PMM: Option<BitmapAllocator> = None;
 
+pub fn init(memory_map_tag: &'static MemoryMapTag) -> Result<(), ()> {
+    unsafe {
+        PMM.replace(BitmapAllocator::new(memory_map_tag));
+    }
+
+    let pmm = unsafe { PMM.as_mut().unwrap() };
+
+    let limit = kernel_end() + 2093056;
     // Mark pages occupied by kernel and memory allocator as used.
     while let Some(frame) = pmm.allocate_frame() {
         // todo: This is very brittle. Must fix in future.
-        if frame.start_address().as_u64() >= 0x3FF000 {
+        if frame.start_address().as_u64() >= limit {
             break;
         }
     }
@@ -51,7 +58,7 @@ pub fn total_memory_aligned<S: PageSize>(memory_map_tag: &'static MemoryMapTag) 
     x86_64::align_up(total_memory(memory_map_tag), S::SIZE)
 }
 
-fn get_usable_areas<S: PageSize>(memory_map_tag: &'static MemoryMapTag) -> impl Iterator<Item=Range<u64>> {
+pub fn get_usable_areas<S: PageSize>(memory_map_tag: &'static MemoryMapTag) -> impl Iterator<Item=Range<u64>> {
     memory_map_tag.available_memory_areas()
                   .map(
                       |area| {
@@ -62,7 +69,7 @@ fn get_usable_areas<S: PageSize>(memory_map_tag: &'static MemoryMapTag) -> impl 
                   ).filter(|aligned_area| aligned_area.end - aligned_area.start >= S::SIZE)
 }
 
-fn get_frame_range<S: PageSize>(begin: u64, size: u64) -> PhysFrameRange<S> {
+pub fn get_frame_range<S: PageSize>(begin: u64, size: u64) -> PhysFrameRange<S> {
     let begin = PhysAddr::new(begin);
     let end = begin + size;
     let first = PhysFrame::<S>::containing_address(begin);

@@ -24,7 +24,6 @@ use x86_64::structures::paging::{FrameAllocator, FrameDeallocator, Mapper, PageS
 
 use crate::arch::memory::{get_mapper, get_page_range};
 use crate::arch::meta;
-use crate::serial_println;
 
 use super::{get_frame_range, get_usable_areas};
 use super::DummyAllocator;

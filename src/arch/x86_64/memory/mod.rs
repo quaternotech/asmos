@@ -17,16 +17,17 @@
 use multiboot2::MemoryMapTag;
 use x86_64::{PhysAddr, VirtAddr};
 use x86_64::registers::control::Cr3;
-use x86_64::structures::paging::{OffsetPageTable, Page, PageTable, PageTableFlags, Size2MiB};
+use x86_64::structures::paging::{Mapper, OffsetPageTable, Page, PageTable, PageTableFlags, Size2MiB, Size4KiB};
 use x86_64::structures::paging::{PageSize, Translate};
 use x86_64::structures::paging::mapper::MapToError;
 use x86_64::structures::paging::page::PageRange;
 
-use crate::arch::memory::physical::total_memory_aligned;
+use crate::arch::memory::physical::{get_frame_range, total_memory_aligned};
 
 use super::meta;
 
 mod physical;
+mod virt;
 
 // Todo:
 // 1. Physical memory manager: Find and return frames. (partially done)
@@ -35,11 +36,11 @@ mod physical;
 pub fn init(memory_map_tag: &'static MemoryMapTag) -> Result<(), MapToError<Size2MiB>> {
     physical::init(&memory_map_tag).ok();
 
-    // map_physical_memory(memory_map_tag)?;
+    map_physical_memory(memory_map_tag)?;
 
-    // let mut mapper = unsafe { get_mapper(meta::physical_memory_offset()) };
+    let mut mapper = unsafe { get_mapper(meta::physical_memory_offset()) };
 
-    // map_reserved_region(&mut mapper).ok();
+    map_reserved_region(&mut mapper).ok();
 
     Ok(())
 }
@@ -77,38 +78,39 @@ fn get_page_range<S: PageSize>(begin: u64, size: u64) -> PageRange<S> {
     Page::<S>::range(first, last)
 }
 
-// fn map_physical_memory(memory_map_tag: &'static MemoryMapTag) -> Result<(), MapToError<Size2MiB>> {
-//     // Temporarily use kernel offset.
-//     let mut mapper = unsafe { get_mapper(meta::kernel_offset()) };
-//     // Temporarily map some pages at the end of the kernel.
-//     let flags = PageTableFlags::PRESENT | PageTableFlags::WRITABLE | PageTableFlags::HUGE_PAGE;
-//     let temp_map_size = 0x400000;
-//     unsafe {
-//         // todo: fix: these figures are very brittle.
-//         physical::map_range(&mut mapper, flags, meta::kernel_end() + 0x400000, meta::kernel_end() + 0x400000 + meta::kernel_offset(), temp_map_size)?;
-//     }
-//
-//     // Map entire available physical memory at an offset.
-//     let total_available_memory = total_memory_aligned::<Size2MiB>(memory_map_tag);
-//     unsafe {
-//         physical::map_range(&mut mapper, flags, 0, meta::physical_memory_offset(), total_available_memory)?;
-//     }
-//
-//     // Unmap the temporarily mapped pages after the kernel.
-//     let page_range = get_page_range::<Size2MiB>(meta::kernel_end() + 0x400000 + meta::kernel_offset(), temp_map_size);
-//     unsafe {
-//         physical::unmap_range(&mut mapper, page_range).ok();
-//     }
-//
-//     Ok(())
-// }
-//
-// fn map_reserved_region(mapper: &mut impl Mapper<Size4KiB>) -> Result<(), MapToError<Size4KiB>> {
-//     let frame_range = get_frame_range(0, meta::reserved_region_size());
-//     let flags = PageTableFlags::PRESENT | PageTableFlags::WRITABLE;
-//     unsafe {
-//         physical::identity_map_range(mapper, flags, frame_range)?;
-//     }
-//
-//     Ok(())
-// }
+fn map_physical_memory(memory_map_tag: &'static MemoryMapTag) -> Result<(), MapToError<Size2MiB>> {
+    // Temporarily use kernel offset.
+    let mut mapper = unsafe { get_mapper(meta::kernel_offset()) };
+    // Temporarily map some pages at the end of the kernel.
+    let flags = PageTableFlags::PRESENT | PageTableFlags::WRITABLE | PageTableFlags::HUGE_PAGE;
+    let temp_map_size = 0x400000;
+    let offset = 0x200000;
+    unsafe {
+        // todo: fix: these figures are very brittle.
+        virt::map_range(&mut mapper, flags, meta::kernel_end() + offset, meta::kernel_end() + meta::kernel_offset() + offset, temp_map_size)?;
+    }
+
+    // Map entire available physical memory at an offset.
+    let total_available_memory = total_memory_aligned::<Size2MiB>(memory_map_tag);
+    unsafe {
+        virt::map_range(&mut mapper, flags, 0, meta::physical_memory_offset(), total_available_memory)?;
+    }
+
+    // Unmap the temporarily mapped pages after the kernel.
+    let page_range = get_page_range::<Size2MiB>(meta::kernel_end() + meta::kernel_offset() + offset, temp_map_size);
+    unsafe {
+        virt::unmap_range(&mut mapper, page_range).ok();
+    }
+
+    Ok(())
+}
+
+fn map_reserved_region(mapper: &mut impl Mapper<Size4KiB>) -> Result<(), MapToError<Size4KiB>> {
+    let frame_range = get_frame_range(0, meta::reserved_region_size());
+    let flags = PageTableFlags::PRESENT | PageTableFlags::WRITABLE;
+    unsafe {
+        virt::identity_map_range(mapper, flags, frame_range)?;
+    }
+
+    Ok(())
+}
