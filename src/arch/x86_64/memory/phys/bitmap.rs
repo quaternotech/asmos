@@ -41,7 +41,7 @@ impl Bitmap {
 
     fn bytes(&self) -> usize { (self.num_frames + 7) >> 3 }
 
-    fn first_free(&self) -> Option<usize> {
+    fn first_free_frame(&self) -> Option<usize> {
         let size = self.bytes();
         let ptr = self.start;
 
@@ -68,6 +68,15 @@ impl Bitmap {
 
         let frame_index = (i * u8::BITS as usize) + b as usize;
         if frame_index >= self.num_frames { None } else { Some(frame_index) }
+    }
+
+    fn next(&mut self) -> Option<usize> {
+        if let Some(frame_index) = self.first_free_frame() {
+            self.set_one(frame_index);
+            Some(frame_index)
+        } else {
+            None
+        }
     }
 
     fn is_zero(&self, frame_index: usize) -> bool { self.get_bit(frame_index) == 0 }
@@ -205,50 +214,14 @@ impl BitmapAllocator {
 unsafe impl FrameAllocator<Size4KiB> for BitmapAllocator {
     fn allocate_frame(&mut self) -> Option<PhysFrame<Size4KiB>> {
         let mut frame = None;
-        let mut frame_found = false;
         let mut cur = self.head;
-        while cur != ptr::null_mut() && !frame_found {
+        while cur != ptr::null_mut() {
             let node = unsafe { MemoryChunk::reference(cur) };
-            let bitmap = node.bitmap;
-            let bitmap_size = node.bitmap().bytes();
-            let mut i = 0;
-            while i < bitmap_size {
-                let value = unsafe { *((bitmap as usize + i) as *mut u8) };
-                if value != u8::MAX {
-                    frame_found = true;
-                    break;
-                }
-
-                // todo: handle extra bits. Ignoring it for now.
-
-                i += 1;
+            if let Some(frame_index) = node.bitmap().next() {
+                let address = node.address + (frame_index * 4096);
+                frame = Some(PhysFrame::containing_address(PhysAddr::new(address as u64)));
+                break;
             }
-
-            let ptr = (bitmap as usize + i) as *mut u8;
-            let value = unsafe { *ptr };
-
-            if value == u8::MAX {
-                cur = unsafe { (*cur).next };
-                continue;
-            }
-
-            let mut j = 0;
-            while j < 8 {
-                if ((value >> j) & 1) == 0 {
-                    break;
-                }
-                j += 1;
-            }
-            unsafe {
-                // todo: fix "attempt to shift left with overflow"
-                // occurs in debug mode.
-                assert!(j < 8); // fails
-                *ptr = value | (1 << j);
-            }
-
-            let address = node.address + (((i * 8) + j) * 4096);
-            frame = Some(PhysFrame::containing_address(PhysAddr::new(address as u64)));
-
             cur = unsafe { (*cur).next };
         }
 
