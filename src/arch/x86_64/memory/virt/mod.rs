@@ -16,19 +16,23 @@
 
 use core::iter;
 
-use x86_64::structures::paging::{Mapper, PageSize, PageTableFlags, Size4KiB};
+use x86_64::structures::paging::{Mapper, PageSize};
+use x86_64::structures::paging::{PageTableFlags, Size4KiB};
 use x86_64::structures::paging::frame::PhysFrameRange;
 use x86_64::structures::paging::mapper::{MapToError, UnmapError};
 use x86_64::structures::paging::page::PageRange;
 
 use crate::arch::memory::get_page_range;
-use crate::arch::memory::physical::PMM;
-use crate::arch::memory::physical::get_frame_range;
+use crate::arch::memory::phys::{get_frame_range, PHYSICAL_MEMORY_ALLOCATOR};
+
+pub fn init() -> Result<(), ()> {
+    Ok(())
+}
 
 pub unsafe fn identity_map_range(mapper: &mut impl Mapper<Size4KiB>,
                                  flags: PageTableFlags,
                                  frame_range: PhysFrameRange<Size4KiB>) -> Result<(), MapToError<Size4KiB>> {
-    let frame_allocator = PMM.as_mut().unwrap();
+    let frame_allocator = PHYSICAL_MEMORY_ALLOCATOR.as_mut().unwrap();
 
     for frame in frame_range {
         mapper.identity_map(frame, flags, frame_allocator)?.flush();
@@ -42,7 +46,7 @@ pub unsafe fn map_range<S: PageSize>(mapper: &mut impl Mapper<S>,
                                      physical_offset: u64,
                                      virtual_offset: u64,
                                      size: u64) -> Result<(), MapToError<S>> {
-    let frame_allocator = PMM.as_mut().unwrap();
+    let frame_allocator = PHYSICAL_MEMORY_ALLOCATOR.as_mut().unwrap();
 
     let frame_range = get_frame_range::<S>(physical_offset, size);
     let page_range = get_page_range::<S>(virtual_offset, size);

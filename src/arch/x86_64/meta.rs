@@ -99,3 +99,13 @@ pub fn heap_end() -> u64 {
 pub fn heap_size() -> u64 {
     HEAP_SIZE
 }
+
+pub fn total_memory() -> Option<u64> {
+    let mem_map_tag = multiboot_info().memory_map_tag()?;
+    Some(mem_map_tag.memory_areas().map(|area| area.size()).sum())
+}
+
+pub fn total_available_memory() -> Option<u64> {
+    let mem_map_tag = multiboot_info().memory_map_tag()?;
+    Some(mem_map_tag.available_memory_areas().map(|area| area.size()).sum())
+}

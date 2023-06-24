@@ -29,28 +29,123 @@ use super::{get_frame_range, get_usable_areas};
 use super::DummyAllocator;
 
 #[derive(Debug)]
+struct Bitmap {
+    num_frames: usize,
+    start: *mut u8,
+}
+
+impl Bitmap {
+    fn new(num_frames: usize, start: *mut u8) -> Self {
+        Self { num_frames, start }
+    }
+
+    fn bytes(&self) -> usize { (self.num_frames + 7) >> 3 }
+
+    fn first_free(&self) -> Option<usize> {
+        let size = self.bytes();
+        let ptr = self.start;
+
+        let mut i = 0;
+        let mut byte = 0;
+        while i < size {
+            byte = unsafe { *ptr.offset(i as isize) };
+            if byte != u8::MAX {
+                break;
+            }
+            i += 1;
+        }
+        if i == size {
+            return None;
+        }
+
+        let mut b = 0;
+        while b < u8::BITS {
+            if byte & (1 << b) == 0 {
+                break;
+            }
+            b += 1;
+        }
+
+        let frame_index = (i * u8::BITS as usize) + b as usize;
+        if frame_index >= self.num_frames { None } else { Some(frame_index) }
+    }
+
+    fn is_zero(&self, frame_index: usize) -> bool { self.get_bit(frame_index) == 0 }
+
+    fn is_one(&self, frame_index: usize) -> bool { !self.is_zero(frame_index) }
+
+    fn coords(&self, frame_index: usize) -> (usize, u8) {
+        assert!(frame_index < self.num_frames);
+
+        let byte_index = frame_index / u8::BITS as usize;
+        let bit_index = (frame_index % u8::BITS as usize) as u8;
+        (byte_index, bit_index)
+    }
+
+    fn get_bit(&self, frame_index: usize) -> u8 {
+        let (byte_index, bit_index) = self.coords(frame_index);
+        let byte = unsafe { *self.start.offset(byte_index as isize) };
+        (byte >> bit_index) & 1
+    }
+
+    fn set_bit(&self, frame_index: usize, value: bool) {
+        let (byte_index, bit_index) = self.coords(frame_index);
+        unsafe {
+            let ptr = self.start.offset(byte_index as isize);
+            *ptr = (*ptr & !(1 << bit_index)) | (value as u8) << bit_index;
+        };
+    }
+
+    fn set_one(&mut self, frame_index: usize) {
+        let (byte_index, bit_index) = self.coords(frame_index);
+        let ptr = unsafe { self.start.offset(byte_index as isize) };
+        unsafe { *ptr |= 1 << bit_index; }
+    }
+
+    fn set_zero(&mut self, frame_index: usize) {
+        let (byte_index, bit_index) = self.coords(frame_index);
+        let ptr = unsafe { self.start.offset(byte_index as isize) };
+        unsafe { *ptr &= !(1 << bit_index); }
+    }
+
+    fn toggle_bit(&mut self, frame_index: usize) {
+        let (byte_index, bit_index) = self.coords(frame_index);
+        let ptr = unsafe { self.start.offset(byte_index as isize) };
+        unsafe { *ptr ^= 1 << bit_index };
+    }
+
+    fn extra_bits(&self) -> u8 {
+        ((self.bytes() * u8::BITS as usize) - self.num_frames) as u8
+    }
+}
+
+#[derive(Debug)]
 #[repr(C)]
 pub struct MemoryChunk {
-    pub size: usize,
-    pub start_address: usize,
-    pub bitmap: *mut u8,
-    pub next: *mut MemoryChunk,
+    num_frames: usize,
+    address: usize,
+    bitmap: *mut u8,
+    next: *mut MemoryChunk,
 }
 
 impl MemoryChunk {
-    pub unsafe fn reference(ptr: *mut Self) -> &'static mut Self {
+    unsafe fn reference(ptr: *mut Self) -> &'static mut Self {
         &mut *ptr
     }
 
-    pub unsafe fn initialize(&mut self, size: usize, start_address: usize, bitmap: *mut u8) {
-        self.size = size;
-        self.start_address = start_address;
+    fn set(&mut self, size: usize, address: usize, bitmap: *mut u8) {
+        self.num_frames = size;
+        self.address = address;
         self.bitmap = bitmap;
         self.next = ptr::null_mut();
     }
 
-    pub fn bitmap_size(&self) -> usize {
-        (x86_64::align_up((self.size / Size4KiB::SIZE as usize) as u64, u8::BITS.into()) / u8::BITS as u64) as usize
+    fn bitmap(&self) -> Bitmap {
+        Bitmap::new(self.num_frames, self.bitmap)
+    }
+
+    fn size(&self) -> usize {
+        self.num_frames * Size4KiB::SIZE as usize
     }
 }
 
@@ -76,7 +171,7 @@ impl BitmapAllocator {
         let total_memory = n_struct_size + n_bitmap_size;
         let memory_required = x86_64::align_up(total_memory, Size2MiB::SIZE);
 
-        // Dynamically allocate a memory for physical memory manager's data structures.
+        // Dynamically allocate a memory for phys memory manager's data structures.
         let mut mapper = unsafe { get_mapper(meta::kernel_offset()) };
         let mut allocator = DummyAllocator {};
         let flags = PageTableFlags::PRESENT | PageTableFlags::WRITABLE | PageTableFlags::HUGE_PAGE;
@@ -90,11 +185,11 @@ impl BitmapAllocator {
 
         let mut cur = head;
         for (i, frame) in frames().enumerate() {
-            let size = frame.size();
+            let size = frame.size() / Size4KiB::SIZE as usize;
             let start_address = frame.start as usize;
             let bitmap = (cur as usize + mem::size_of::<MemoryChunk>()) as *mut u8;
-            unsafe { (*cur).initialize(size, start_address, bitmap) };
-            let bitmap_size = unsafe { (*cur).bitmap_size() };
+            unsafe { (*cur).set(size, start_address, bitmap) };
+            let bitmap_size = unsafe { (*cur).bitmap().bytes() };
             if i < n - 1 {
                 unsafe {
                     (*cur).next = (bitmap as usize + bitmap_size as usize) as *mut MemoryChunk;
@@ -115,7 +210,7 @@ unsafe impl FrameAllocator<Size4KiB> for BitmapAllocator {
         while cur != ptr::null_mut() && !frame_found {
             let node = unsafe { MemoryChunk::reference(cur) };
             let bitmap = node.bitmap;
-            let bitmap_size = node.bitmap_size();
+            let bitmap_size = node.bitmap().bytes();
             let mut i = 0;
             while i < bitmap_size {
                 let value = unsafe { *((bitmap as usize + i) as *mut u8) };
@@ -151,7 +246,7 @@ unsafe impl FrameAllocator<Size4KiB> for BitmapAllocator {
                 *ptr = value | (1 << j);
             }
 
-            let address = node.start_address + (((i * 8) + j) * 4096);
+            let address = node.address + (((i * 8) + j) * 4096);
             frame = Some(PhysFrame::containing_address(PhysAddr::new(address as u64)));
 
             cur = unsafe { (*cur).next };

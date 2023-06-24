@@ -40,7 +40,6 @@ pub(crate) fn init(boot_info_addr: usize) {
     let memory_map_tag = boot_info.memory_map_tag()
                                   .expect("the bootloader failed to provide memory map tag");
     memory::init(memory_map_tag).expect("kernel failed to initialize memory");
-    // allocator::init().expect("kernel failed to initialize allocator");
 
     // let vbe_buffer_tag = boot_info.vbe_info_tag();
     // serial_println!("{:?}", vbe_buffer_tag);

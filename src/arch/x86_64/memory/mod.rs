@@ -17,26 +17,24 @@
 use multiboot2::MemoryMapTag;
 use x86_64::{PhysAddr, VirtAddr};
 use x86_64::registers::control::Cr3;
-use x86_64::structures::paging::{Mapper, OffsetPageTable, Page, PageTable, PageTableFlags, Size2MiB, Size4KiB};
-use x86_64::structures::paging::{PageSize, Translate};
+use x86_64::structures::paging::{Mapper, PageSize, Translate};
+use x86_64::structures::paging::{OffsetPageTable, Page, PageTable, PageTableFlags, Size2MiB, Size4KiB};
 use x86_64::structures::paging::mapper::MapToError;
 use x86_64::structures::paging::page::PageRange;
 
-use crate::arch::memory::physical::{get_frame_range, total_memory_aligned};
+use phys::get_frame_range;
 
 use super::meta;
 
-mod physical;
+mod phys;
 mod virt;
 
-// Todo:
-// 1. Physical memory manager: Find and return frames. (partially done)
-// 2. Virtual memory manager: Map those frames into the virtual space.
-// 3. Linear memory manager: Interface for performing dynamic allocations via heap.
-pub fn init(memory_map_tag: &'static MemoryMapTag) -> Result<(), MapToError<Size2MiB>> {
-    physical::init(&memory_map_tag).ok();
+pub fn init(memory_map_tag: &'static MemoryMapTag) -> Result<(), ()> {
+    phys::init(memory_map_tag)?;
 
-    map_physical_memory(memory_map_tag)?;
+    map_physical_memory().ok();
+
+    virt::init()?;
 
     let mut mapper = unsafe { get_mapper(meta::physical_memory_offset()) };
 
@@ -78,7 +76,7 @@ fn get_page_range<S: PageSize>(begin: u64, size: u64) -> PageRange<S> {
     Page::<S>::range(first, last)
 }
 
-fn map_physical_memory(memory_map_tag: &'static MemoryMapTag) -> Result<(), MapToError<Size2MiB>> {
+fn map_physical_memory() -> Result<(), MapToError<Size2MiB>> {
     // Temporarily use kernel offset.
     let mut mapper = unsafe { get_mapper(meta::kernel_offset()) };
     // Temporarily map some pages at the end of the kernel.
@@ -90,8 +88,8 @@ fn map_physical_memory(memory_map_tag: &'static MemoryMapTag) -> Result<(), MapT
         virt::map_range(&mut mapper, flags, meta::kernel_end() + offset, meta::kernel_end() + meta::kernel_offset() + offset, temp_map_size)?;
     }
 
-    // Map entire available physical memory at an offset.
-    let total_available_memory = total_memory_aligned::<Size2MiB>(memory_map_tag);
+    // Map entire available phys memory at an offset.
+    let total_available_memory = total_memory_aligned::<Size2MiB>();
     unsafe {
         virt::map_range(&mut mapper, flags, 0, meta::physical_memory_offset(), total_available_memory)?;
     }
@@ -113,4 +111,9 @@ fn map_reserved_region(mapper: &mut impl Mapper<Size4KiB>) -> Result<(), MapToEr
     }
 
     Ok(())
+}
+
+
+pub fn total_memory_aligned<S: PageSize>() -> u64 {
+    x86_64::align_up(meta::total_memory().unwrap(), S::SIZE)
 }
