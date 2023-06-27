@@ -130,7 +130,7 @@ impl Bitmap {
 
 #[derive(Debug)]
 #[repr(C)]
-pub struct MemoryChunk {
+struct MemoryChunk {
     num_frames: usize,
     address: usize,
     bitmap: *mut u8,
@@ -160,7 +160,7 @@ impl MemoryChunk {
 
 #[derive(Debug)]
 pub struct BitmapAllocator {
-    pub head: *mut MemoryChunk,
+    head: *mut MemoryChunk,
 }
 
 impl BitmapAllocator {

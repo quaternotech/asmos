@@ -37,12 +37,12 @@ pub fn init(memory_map_tag: &'static MemoryMapTag) -> Result<(), ()> {
         PHYSICAL_MEMORY_ALLOCATOR.replace(BitmapAllocator::new(memory_map_tag));
     }
 
-    let pmm = unsafe { PHYSICAL_MEMORY_ALLOCATOR.as_mut().unwrap() };
+    let pma = unsafe { PHYSICAL_MEMORY_ALLOCATOR.as_mut().unwrap() };
 
     let limit = kernel_end() + 2093056;
     // Mark pages occupied by kernel and memory allocator as used.
-    while let Some(frame) = pmm.allocate_frame() {
-        // todo: This is very brittle. Must fix in future.
+    while let Some(frame) = pma.allocate_frame() {
+        // Todo: This is very brittle. Must fix in future.
         if frame.start_address().as_u64() >= limit {
             break;
         }

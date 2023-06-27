@@ -16,7 +16,7 @@
 
 use core::iter;
 
-use x86_64::structures::paging::{Mapper, PageSize};
+use x86_64::structures::paging::{FrameAllocator, Mapper, PageSize};
 use x86_64::structures::paging::{PageTableFlags, Size4KiB};
 use x86_64::structures::paging::frame::PhysFrameRange;
 use x86_64::structures::paging::mapper::{MapToError, UnmapError};
@@ -64,6 +64,20 @@ pub unsafe fn unmap_range<S: PageSize>(mapper: &mut impl Mapper<S>,
                                        page_range: PageRange<S>) -> Result<(), UnmapError> {
     for page in page_range {
         mapper.unmap(page)?.1.flush();
+    }
+
+    Ok(())
+}
+
+pub fn allocate_range(mapper: &mut impl Mapper<Size4KiB>, flags: PageTableFlags, page_range: PageRange<Size4KiB>)
+                      -> Result<(), MapToError<Size4KiB>> {
+    let frame_allocator = unsafe { PHYSICAL_MEMORY_ALLOCATOR.as_mut().unwrap() };
+
+    for page in page_range {
+        let frame = frame_allocator.allocate_frame().unwrap();
+        unsafe {
+            mapper.map_to(page, frame, flags, frame_allocator)?.flush();
+        }
     }
 
     Ok(())

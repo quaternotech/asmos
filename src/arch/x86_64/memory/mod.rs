@@ -14,6 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use linked_list_allocator::Heap;
 use multiboot2::MemoryMapTag;
 use x86_64::{PhysAddr, VirtAddr};
 use x86_64::registers::control::Cr3;
@@ -39,6 +40,8 @@ pub fn init(memory_map_tag: &'static MemoryMapTag) -> Result<(), ()> {
     let mut mapper = unsafe { get_mapper(meta::physical_memory_offset()) };
 
     map_reserved_region(&mut mapper).ok();
+
+    allocate_heap(&mut mapper).ok();
 
     Ok(())
 }
@@ -110,6 +113,15 @@ fn map_reserved_region(mapper: &mut impl Mapper<Size4KiB>) -> Result<(), MapToEr
         virt::identity_map_range(mapper, flags, frame_range)?;
     }
 
+    Ok(())
+}
+
+fn allocate_heap(mapper: &mut impl Mapper<Size4KiB>) -> Result<(), MapToError<Size4KiB>> {
+    let flags = PageTableFlags::PRESENT | PageTableFlags::WRITABLE;
+    let page_range = get_page_range(meta::heap_begin(), meta::heap_size());
+    unsafe {
+        virt::allocate_range(mapper, flags, page_range)?;
+    }
     Ok(())
 }
 
